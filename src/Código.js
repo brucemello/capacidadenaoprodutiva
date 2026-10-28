@@ -20,6 +20,7 @@ const CONFIG = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('📊 Capacity Multi-Time')
+    .addItem('📈 Abrir Dashboard', 'abrirDashboard')
     .addItem('Abrir Painel Lateral', 'abrirPainelLateral')
     .addItem('🔄 Buscar Mês Fechado (API Tempo)', 'buscarMesFechadoPeloMenu')
     .addSeparator()

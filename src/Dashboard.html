@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <title>Capacidade Não Produtiva · Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --ink: #0b1b33;
+      --ink-2: #44546f;
+      --ink-3: #8a97ad;
+      --line: #e6ebf3;
+      --navy: #0b1f3a;
+      --teal: #0f5b78;
+      --cyan: #06b6d4;
+      --blue: #3b82f6;
+      --violet: #8b5cf6;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --orange: #f97316;
+      --red: #ef4444;
+      --pink: #ec4899;
+      --radius: 16px;
+      --shadow: 0 1px 2px rgba(11,27,51,.04), 0 8px 24px rgba(11,27,51,.06);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif; font-size: 14px; }
+    body { min-height: 100vh; }
+
+    /* ---------- Header ---------- */
+    .hero {
+      position: relative; overflow: hidden;
+      background: radial-gradient(1200px 400px at 85% -50%, rgba(6,182,212,.55), transparent 60%),
+                  radial-gradient(800px 300px at 10% 120%, rgba(139,92,246,.45), transparent 60%),
+                  linear-gradient(120deg, #0b1f3a 0%, #0f3b5f 55%, #0f5b78 100%);
+      color: #fff; padding: 22px 28px 74px;
+    }
+    .hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    .brand { display: flex; gap: 14px; align-items: center; }
+    .brand-logo { width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,.12); display: grid; place-items: center; border: 1px solid rgba(255,255,255,.2); font-size: 22px; }
+    .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .7; font-weight: 600; }
+    h1 { margin: 2px 0 0; font-size: 24px; font-weight: 800; letter-spacing: -.01em; }
+    .sub { margin-top: 4px; font-size: 12.5px; opacity: .78; }
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; opacity: .75; font-weight: 600; }
+    .field select {
+      appearance: none; min-width: 190px; padding: 10px 34px 10px 12px; border-radius: 10px; font: inherit; font-weight: 600; font-size: 13px;
+      background: rgba(255,255,255,.12) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+      color: #fff; border: 1px solid rgba(255,255,255,.25); cursor: pointer;
+    }
+    .field select option { color: var(--ink); }
+    .btn { border: 0; border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; transition: transform .15s, background .2s; }
+    .btn:active { transform: scale(.97); }
+    .btn-light { background: #fff; color: var(--navy); }
+    .btn-light:hover { background: #e8f6fb; }
+    .btn-ghost { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25); }
+    .btn-ghost:hover { background: rgba(255,255,255,.2); }
+    .btn[disabled] { opacity: .6; cursor: wait; }
+
+    /* ---------- Layout ---------- */
+    main { padding: 0 28px 32px; margin-top: -54px; position: relative; }
+    .grid { display: grid; gap: 16px; }
+    .kpis { grid-template-columns: 1.35fr repeat(6, 1fr); }
+    .row-2 { grid-template-columns: 1fr 1.25fr; margin-top: 16px; }
+    .row-3 { grid-template-columns: 1.35fr 1fr; margin-top: 16px; }
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--line); padding: 18px 20px; min-width: 0; }
+    .card h2 { font-size: 15px; margin: 0; font-weight: 700; letter-spacing: -.005em; }
+    .card .card-sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .chart-box { position: relative; height: 300px; }
+
+    /* ---------- KPI ---------- */
+    .kpi { position: relative; overflow: hidden; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; min-height: 132px; }
+    .kpi::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--accent, var(--blue)); }
+    .kpi-top { display: flex; justify-content: space-between; align-items: center; }
+    .kpi-label { font-size: 11.5px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
+    .kpi-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 16px; background: color-mix(in srgb, var(--accent) 14%, white); }
+    .kpi-value { font-size: 27px; font-weight: 800; letter-spacing: -.02em; margin-top: 10px; font-variant-numeric: tabular-nums; }
+    .kpi-value small { font-size: 14px; font-weight: 700; color: var(--ink-3); margin-left: 2px; }
+    .delta { font-size: 11.5px; font-weight: 700; margin-top: 4px; display: inline-flex; gap: 4px; align-items: center; }
+    .delta.good { color: var(--green); } .delta.bad { color: var(--red); } .delta.neutral { color: var(--ink-3); }
+
+    .kpi-hero { background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%); flex-direction: row; align-items: center; gap: 16px; }
+    .kpi-hero::before { width: 0; }
+    .ring { position: relative; width: 104px; height: 104px; flex: none; }
+    .ring svg { transform: rotate(-90deg); }
+    .ring-val { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 22px; letter-spacing: -.02em; }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-top: 8px; }
+    .pill-ok { background: #dcfce7; color: #047857; } .pill-warn { background: #fef3c7; color: #b45309; } .pill-bad { background: #fee2e2; color: #b91c1c; }
+
+    /* ---------- Ranking ---------- */
+    .rank { display: flex; flex-direction: column; gap: 10px; max-height: 340px; overflow-y: auto; padding-right: 4px; }
+    .rank-item { display: grid; grid-template-columns: 28px 1fr 64px; gap: 10px; align-items: center; }
+    .avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; }
+    .rank-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-team { font-size: 10.5px; color: var(--ink-3); font-weight: 500; }
+    .bar { height: 8px; border-radius: 99px; background: #eef2f8; margin-top: 4px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+    .rank-val { text-align: right; font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    /* ---------- Heatmap ---------- */
+    .heat-wrap { overflow-x: auto; }
+    table.heat { border-collapse: separate; border-spacing: 3px; font-size: 11px; }
+    table.heat th { font-weight: 600; color: var(--ink-3); padding: 2px; text-align: center; min-width: 26px; }
+    table.heat th.we { color: #c2cad8; }
+    table.heat td.name { white-space: nowrap; padding-right: 10px; font-weight: 600; color: var(--ink-2); max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+    table.heat td.cell { width: 26px; height: 24px; border-radius: 6px; text-align: center; font-weight: 700; font-size: 10px; cursor: default; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--ink-2); }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+
+    /* ---------- Tabela ---------- */
+    .table-tools { display: flex; gap: 8px; align-items: center; }
+    .search { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); font: inherit; font-size: 12.5px; width: 220px; background: #f8fafc; }
+    .btn-soft { background: #eef4ff; color: var(--blue); }
+    .btn-soft:hover { background: #e0eaff; }
+    .tbl-wrap { overflow-x: auto; }
+    table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.data th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 700; padding: 10px; border-bottom: 1px solid var(--line); cursor: pointer; white-space: nowrap; user-select: none; }
+    table.data th.num, table.data td.num { text-align: right; }
+    table.data td { padding: 10px; border-bottom: 1px solid #f1f4f9; font-variant-numeric: tabular-nums; }
+    table.data tr:hover td { background: #fafcff; }
+    .chip { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+
+    .empty { text-align: center; padding: 60px 20px; color: var(--ink-3); }
+    .empty b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 6px; }
+
+    /* ---------- Loading / toast ---------- */
+    .loader { position: fixed; inset: 0; background: rgba(243,246,251,.85); display: grid; place-items: center; z-index: 50; backdrop-filter: blur(2px); }
+    .spinner { width: 44px; height: 44px; border-radius: 50%; border: 4px solid #dbe5f3; border-top-color: var(--teal); animation: spin .8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader p { color: var(--ink-2); font-weight: 600; text-align: center; margin: 0; }
+    .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--navy); color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 13px; box-shadow: var(--shadow); transition: transform .3s; max-width: 80vw; z-index: 60; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.err { background: #b91c1c; }
+
+    footer { text-align: center; font-size: 11.5px; color: var(--ink-3); padding: 6px 0 22px; }
+    footer a { color: var(--teal); font-weight: 600; text-decoration: none; }
+
+    @media (max-width: 1250px) { .kpis { grid-template-columns: repeat(4, 1fr); } .kpi-hero { grid-column: span 2; } }
+    @media (max-width: 900px) { .row-2, .row-3 { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .hero, main { padding-left: 16px; padding-right: 16px; } .field select { min-width: 140px; } }
+  </style>
+</head>
+<body>
+  <div class="loader" id="loader"><div><div class="spinner"></div><p id="loaderMsg">Carregando indicadores…</p></div></div>
+  <div class="toast" id="toast"></div>
+
+  <header class="hero">
+    <div class="hero-top">
+      <div class="brand">
+        <div class="brand-logo">📊</div>
+        <div>
+          <div class="eyebrow">Operational Capacity</div>
+          <h1>Controle Mensal de Capacidade Não Produtiva</h1>
+          <div class="sub" id="subtitulo">—</div>
+        </div>
+      </div>
+      <div class="filters">
+        <div class="field"><label for="fTime">Time</label><select id="fTime"></select></div>
+        <div class="field"><label for="fMes">Mês de referência</label><select id="fMes"></select></div>
+        <button class="btn btn-ghost" id="btnReprocessar" title="Busca o mês no Tempo e recalcula">⟳ Reprocessar mês</button>
+        <button class="btn btn-light" id="btnRecarregar">↻ Atualizar</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <!-- KPIs -->
+    <section class="grid kpis" id="kpis"></section>
+
+    <!-- Linha 2 -->
+    <section class="grid row-2">
+      <div class="card">
+        <div class="card-head"><div><h2>% Não produtivo por time</h2><div class="card-sub">Horas não produtivas ÷ horas esperadas no mês</div></div></div>
+        <div class="chart-box"><canvas id="chTimes"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2>Tendência mensal</h2><div class="card-sub">Esperado × apontado e evolução do % não produtivo</div></div></div>
+        <div class="chart-box"><canvas id="chTendencia"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Linha 3 -->
+    <section class="grid row-3">
+      <div class="card">
+        <div class="card-head"><div><h2>Capacidade por colaborador</h2><div class="card-sub">Horas produtivas, não produtivas e excedentes</div></div></div>
+        <div class="chart-box" id="boxColab"><canvas id="chColab"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2>Ranking de não produtividade</h2><div class="card-sub">Maiores percentuais primeiro</div></div></div>
+        <div class="rank" id="ranking"></div>
+      </div>
+    </section>
+
+    <!-- Heatmap -->
+    <section class="card" style="margin-top:16px">
+      <div class="card-head">
+        <div><h2>Mapa diário de apontamentos</h2><div class="card-sub" id="heatSub">Horas apontadas por dia útil</div></div>
+        <div class="legend">
+          <span><i style="background:#ef4444"></i>0h</span>
+          <span><i style="background:#fb923c"></i>&lt; 50%</span>
+          <span><i style="background:#fcd34d"></i>&lt; meta</span>
+          <span><i style="background:#34d399"></i>meta</span>
+          <span><i style="background:#3b82f6"></i>acima</span>
+          <span><i style="background:#eef2f8"></i>não útil</span>
+        </div>
+      </div>
+      <div class="heat-wrap" id="heatmap"></div>
+    </section>
+
+    <!-- Tabela -->
+    <section class="card" style="margin-top:16px">
+      <div class="card-head">
+        <div><h2>Detalhamento por colaborador</h2><div class="card-sub" id="tblSub">—</div></div>
+        <div class="table-tools">
+          <input class="search" id="busca" placeholder="Buscar colaborador…">
+          <button class="btn btn-soft" id="btnCsv">⬇ CSV</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table class="data" id="tabela"></table></div>
+    </section>
+  </main>
+
+  <footer id="rodape">—</footer>
+
+  <script>
+    /* ======================= Estado ======================= */
+    const TODOS = '__todos__';
+    const PALETA = ['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ec4899','#f97316','#14b8a6','#6366f1','#84cc16','#ef4444','#0ea5e9'];
+    let DADOS = null;
+    let charts = {};
+    let ordem = { col: 'perc', dir: -1 };
+
+    Chart.register(ChartDataLabels);
+    Chart.defaults.font.family = "'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif";
+    Chart.defaults.font.size = 11.5;
+    Chart.defaults.color = '#44546f';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.boxWidth = 8;
+    Chart.defaults.plugins.tooltip.backgroundColor = '#0b1f3a';
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 10;
+    Chart.defaults.plugins.datalabels.display = false;
+
+    /* ======================= Helpers ======================= */
+    const $ = id => document.getElementById(id);
+    const fmtH = (v, d = 1) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const fmtP = (v, d = 1) => ((v || 0) * 100).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%';
+    const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const MESES_LONGOS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const nomeMes = m => { const [a, n] = m.split('-'); return `${MESES[+n - 1]}/${a.slice(2)}`; };
+    const nomeMesLongo = m => { const [a, n] = m.split('-'); return `${MESES_LONGOS[+n - 1]} de ${a}`; };
+    const mesAnterior = m => { const [a, n] = m.split('-').map(Number); const d = new Date(a, n - 2, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+    const corPerc = p => p <= 0.10 ? '#10b981' : p <= 0.20 ? '#f59e0b' : '#ef4444';
+    const statusPerc = p => p <= 0.10 ? ['Saudável', 'pill-ok'] : p <= 0.20 ? ['Atenção', 'pill-warn'] : ['Crítico', 'pill-bad'];
+    const iniciais = n => n.split(/\s+/).filter(Boolean).map(p => p[0]).filter((_, i, a) => i === 0 || i === a.length - 1).join('').toUpperCase();
+    const corPessoa = n => PALETA[[...n].reduce((s, c) => s + c.charCodeAt(0), 0) % PALETA.length];
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function toast(msg, erro) {
+      const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (erro ? ' err' : '');
+      clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast' + (erro ? ' err' : ''), 4500);
+    }
+    function loading(on, msg) { $('loader').style.display = on ? 'grid' : 'none'; if (msg) $('loaderMsg').textContent = msg; }
+
+    /* ======================= Carga ======================= */
+    function carregar() {
+      loading(true, 'Carregando indicadores…');
+      google.script.run
+        .withSuccessHandler(d => { DADOS = d; montarFiltros(); render(); loading(false); })
+        .withFailureHandler(e => { loading(false); toast('Erro ao carregar: ' + (e.message || e), true); })
+        .obterDadosDashboard();
+    }
+
+    function montarFiltros() {
+      const times = [...new Set(DADOS.historico.map(r => r.time))].sort();
+      const meses = [...new Set(DADOS.historico.map(r => r.mes))].sort().reverse();
+      const tSel = $('fTime').value || TODOS, mSel = $('fMes').value;
+      $('fTime').innerHTML = `<option value="${TODOS}">Todos os times</option>` + times.map(t => `<option>${esc(t)}</option>`).join('');
+      $('fMes').innerHTML = meses.map(m => `<option value="${m}">${nomeMesLongo(m)}</option>`).join('') || '<option value="">Sem apurações</option>';
+      if (times.includes(tSel)) $('fTime').value = tSel;
+      if (meses.includes(mSel)) $('fMes').value = mSel;
+    }
+
+    /* ======================= Agregações ======================= */
+    function filtrar(mes) {
+      const t = $('fTime').value;
+      return DADOS.historico.filter(r => r.mes === mes && (t === TODOS || r.time === t) && r.considerar !== 'NÃO');
+    }
+    function totais(linhas) {
+      const o = { esp: 0, ap: 0, np: 0, exc: 0, pessoas: new Set() };
+      linhas.forEach(r => {
+        o.esp += r.esperadas; o.ap += r.apontadas; o.np += r.naoProdutivas;
+        o.exc += Math.max(r.apontadas - r.esperadas, 0); o.pessoas.add(r.usuario);
+      });
+      o.perc = o.esp > 0 ? o.np / o.esp : 0;
+      o.cobertura = o.esp > 0 ? Math.min(o.ap / o.esp, 9.99) : 0;
+      return o;
+    }
+    function porColaborador(linhas) {
+      const m = {};
+      linhas.forEach(r => {
+        const k = r.usuario;
+        if (!m[k]) m[k] = { nome: r.nome, usuario: r.usuario, time: r.time, esp: 0, ap: 0, np: 0 };
+        m[k].esp += r.esperadas; m[k].ap += r.apontadas; m[k].np += r.naoProdutivas;
+      });
+      return Object.values(m).map(c => ({ ...c, exc: Math.max(c.ap - c.esp, 0), perc: c.esp > 0 ? c.np / c.esp : 0 }));
+    }
+
+    /* ======================= Render ======================= */
+    function render() {
+      const mes = $('fMes').value;
+      if (!mes) { renderVazio(); return; }
+      const linhas = filtrar(mes);
+      const atual = totais(linhas);
+      const anterior = totais(filtrar(mesAnterior(mes)));
+      const temAnterior = anterior.esp > 0;
+      const colabs = porColaborador(linhas);
+      const tSel = $('fTime').value;
+      const fora = DADOS.foraCapacidade.filter(p => tSel === TODOS || p.time === tSel).length;
+
+      $('subtitulo').textContent = `${tSel === TODOS ? 'Todos os times' : tSel} · ${nomeMesLongo(mes)} · ${atual.pessoas.size} pessoas na capacidade`;
+      $('rodape').innerHTML = `Atualizado em ${DADOS.geradoEm} · Carga de referência ${DADOS.horasDia}h por dia útil · <a href="${DADOS.planilhaUrl}" target="_blank">Abrir planilha ↗</a>`;
+
+      renderKpis(atual, anterior, temAnterior, fora);
+      renderTimes(mes);
+      renderTendencia();
+      renderColab(colabs);
+      renderRanking(colabs);
+      renderHeatmap(mes);
+      renderTabela(colabs);
+    }
+
+    function renderVazio() {
+      $('conteudo').innerHTML = `<div class="card empty" style="margin-top:0"><b>Nenhuma apuração encontrada</b>Use “Reprocessar mês” ou o painel da planilha para buscar o timesheet do Tempo.</div>`;
+      $('subtitulo').textContent = 'Sem dados processados';
+    }
+
+    function delta(atual, ant, temAnt, invertido, tipo) {
+      if (!temAnt) return `<div class="delta neutral">— sem mês anterior</div>`;
+      const diff = atual - ant;
+      if (Math.abs(diff) < 1e-9) return `<div class="delta neutral">= igual ao mês anterior</div>`;
+      const melhor = invertido ? diff < 0 : diff > 0;
+      const txt = tipo === 'p' ? (Math.abs(diff) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' p.p.'
+              : tipo === 'n' ? Math.abs(diff)
+              : fmtH(Math.abs(diff)) + 'h';
+      return `<div class="delta ${melhor ? 'good' : 'bad'}">${diff > 0 ? '▲' : '▼'} ${txt} vs mês anterior</div>`;
+    }
+
+    function renderKpis(a, b, temB, fora) {
+      const cor = corPerc(a.perc);
+      const [stTxt, stCls] = statusPerc(a.perc);
+      const C = 2 * Math.PI * 44;
+      const fill = Math.min(a.perc / 0.4, 1) * C; // escala visual: 40% = anel cheio
+      const card = (label, icon, accent, valor, unidade, deltaHtml) => `
+        <div class="card kpi" style="--accent:${accent}">
+          <div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-icon">${icon}</span></div>
+          <div><div class="kpi-value">${valor}${unidade ? `<small>${unidade}</small>` : ''}</div>${deltaHtml}</div>
+        </div>`;
+      $('kpis').innerHTML = `
+        <div class="card kpi kpi-hero">
+          <div class="ring">
+            <svg width="104" height="104"><circle cx="52" cy="52" r="44" stroke="#eef2f8" stroke-width="11" fill="none"/>
+              <circle cx="52" cy="52" r="44" stroke="${cor}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${fill} ${C}"/></svg>
+            <div class="ring-val" style="color:${cor}">${fmtP(a.perc)}</div>
+          </div>
+          <div>
+            <div class="kpi-label">% Não produtivo</div>
+            <div class="status-pill ${stCls}">● ${stTxt}</div>
+            ${delta(a.perc, b.perc, temB, true, 'p')}
+          </div>
+        </div>
+        ${card('Horas esperadas', '🎯', '#3b82f6', fmtH(a.esp, 0), 'h', delta(a.esp, b.esp, temB, false, 'h').replace(/delta (good|bad)/, 'delta neutral'))}
+        ${card('Horas apontadas', '⏱️', '#10b981', fmtH(a.ap), 'h', `<div class="delta neutral">${fmtP(a.cobertura)} da meta</div>`)}
+        ${card('Não produtivas', '⚠️', '#ef4444', fmtH(a.np), 'h', delta(a.np, b.np, temB, true, 'h'))}
+        ${card('Horas excedentes', '🚀', '#f97316', fmtH(a.exc), 'h', delta(a.exc, b.exc, temB, true, 'h'))}
+        ${card('Na capacidade', '👥', '#8b5cf6', a.pessoas.size, '', delta(a.pessoas.size, b.pessoas.size, temB, false, 'n').replace(/delta (good|bad)/, 'delta neutral'))}
+        ${card('Fora da capacidade', '🚫', '#64748b', fora, '', `<div class="delta neutral">marcados como NÃO</div>`)}
+      `;
+    }
+
+    function destruir(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+    function renderTimes(mes) {
+      destruir('times');
+      const m = {};
+      DADOS.historico.filter(r => r.mes === mes && r.considerar !== 'NÃO').forEach(r => {
+        if (!m[r.time]) m[r.time] = { esp: 0, np: 0 };
+        m[r.time].esp += r.esperadas; m[r.time].np += r.naoProdutivas;
+      });
+      const tSel = $('fTime').value;
+      const lista = Object.entries(m).map(([t, v]) => ({ t, p: v.esp ? v.np / v.esp : 0 })).sort((x, y) => y.p - x.p);
+      charts.times = new Chart($('chTimes'), {
+        type: 'bar',
+        data: {
+          labels: lista.map(x => x.t),
+          datasets: [{
+            data: lista.map(x => x.p * 100),
+            backgroundColor: lista.map(x => corPerc(x.p) + (tSel === TODOS || tSel === x.t ? '' : '40')),
+            borderRadius: 8, borderSkipped: false, barThickness: 22
+          }]
+        },
+        options: {
+          indexAxis: 'y', maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => ' ' + c.raw.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '% não produtivo' } },
+            datalabels: { display: true, anchor: 'end', align: 'end', color: '#0b1b33', font: { weight: 700 }, formatter: v => v.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' }
+          },
+          scales: {
+            x: { beginAtZero: true, suggestedMax: Math.max(25, ...lista.map(x => x.p * 100 + 6)), grid: { color: '#eef2f8' }, ticks: { callback: v => v + '%' } },
+            y: { grid: { display: false }, ticks: { font: { weight: 600 } } }
+          }
+        }
+      });
+    }
+
+    function renderTendencia() {
+      destruir('tend');
+      const t = $('fTime').value;
+      const meses = [...new Set(DADOS.historico.map(r => r.mes))].sort().slice(-12);
+      const serie = meses.map(m => totais(DADOS.historico.filter(r => r.mes === m && (t === TODOS || r.time === t) && r.considerar !== 'NÃO')));
+      const ctx = $('chTendencia').getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 300);
+      grad.addColorStop(0, 'rgba(239,68,68,.25)'); grad.addColorStop(1, 'rgba(239,68,68,0)');
+      charts.tend = new Chart(ctx, {
+        data: {
+          labels: meses.map(nomeMes),
+          datasets: [
+            { type: 'bar', label: 'Esperadas', data: serie.map(s => s.esp), backgroundColor: '#c7d7fe', borderRadius: 6, yAxisID: 'y', order: 3 },
+            { type: 'bar', label: 'Apontadas', data: serie.map(s => s.ap), backgroundColor: '#3b82f6', borderRadius: 6, yAxisID: 'y', order: 2 },
+            { type: 'line', label: '% Não produtivo', data: serie.map(s => s.perc * 100), borderColor: '#ef4444', backgroundColor: grad, fill: true, tension: .35, pointRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2.5, yAxisID: 'y1', order: 1,
+              datalabels: { display: true, align: 'top', offset: 6, color: '#ef4444', backgroundColor: '#fff', borderRadius: 6, padding: { top: 2, bottom: 2, left: 6, right: 6 }, font: { weight: 800 }, formatter: v => v.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' } }
+          ]
+        },
+        options: {
+          maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.dataset.yAxisID === 'y1' ? c.raw.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%' : fmtH(c.raw) + 'h'}` } } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#eef2f8' }, ticks: { callback: v => v.toLocaleString('pt-BR') + 'h' } },
+            y1: { beginAtZero: true, position: 'right', suggestedMax: 30, grid: { display: false }, ticks: { callback: v => v + '%' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderColab(colabs) {
+      destruir('colab');
+      const lista = [...colabs].sort((a, b) => b.perc - a.perc);
+      $('boxColab').style.height = Math.max(300, lista.length * 34 + 70) + 'px';
+      charts.colab = new Chart($('chColab'), {
+        type: 'bar',
+        data: {
+          labels: lista.map(c => c.nome),
+          datasets: [
+            { label: 'Produtivas', data: lista.map(c => Math.min(c.ap, c.esp)), backgroundColor: '#10b981' },
+            { label: 'Não produtivas', data: lista.map(c => c.np), backgroundColor: '#ef4444' },
+            { label: 'Excedentes', data: lista.map(c => c.exc), backgroundColor: '#f97316' }
+          ].map(d => ({ ...d, borderRadius: 4, borderSkipped: false, barThickness: 18,
+            datalabels: { display: ctx => ctx.dataset.data[ctx.dataIndex] >= 12, color: '#fff', font: { weight: 700, size: 10.5 }, formatter: v => fmtH(v) } }))
+        },
+        options: {
+          indexAxis: 'y', maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' },
+            tooltip: { callbacks: {
+              label: c => ` ${c.dataset.label}: ${fmtH(c.raw)}h`,
+              afterBody: items => { const c = lista[items[0].dataIndex]; return [`Esperadas: ${fmtH(c.esp)}h`, `Apontadas: ${fmtH(c.ap)}h`, `% não produtivo: ${fmtP(c.perc)}`]; }
+            } } },
+          scales: {
+            x: { stacked: true, grid: { color: '#eef2f8' }, ticks: { callback: v => v + 'h' } },
+            y: { stacked: true, grid: { display: false }, ticks: { font: { weight: 600 } } }
+          }
+        }
+      });
+    }
+
+    function renderRanking(colabs) {
+      const lista = [...colabs].sort((a, b) => b.perc - a.perc);
+      const max = Math.max(0.0001, ...lista.map(c => c.perc));
+      $('ranking').innerHTML = lista.length ? lista.map(c => `
+        <div class="rank-item" title="${esc(c.nome)} · ${fmtH(c.np)}h não produtivas de ${fmtH(c.esp)}h">
+          <div class="avatar" style="background:${corPessoa(c.nome)}">${esc(iniciais(c.nome))}</div>
+          <div style="min-width:0">
+            <div class="rank-name">${esc(c.nome)} <span class="rank-team">· ${esc(c.time)}</span></div>
+            <div class="bar"><span style="width:${(c.perc / max) * 100}%;background:linear-gradient(90deg, ${corPerc(c.perc)}aa, ${corPerc(c.perc)})"></span></div>
+          </div>
+          <div class="rank-val" style="color:${corPerc(c.perc)}">${fmtP(c.perc)}</div>
+        </div>`).join('') : '<div class="empty">Sem colaboradores no filtro.</div>';
+    }
+
+    function renderHeatmap(mes) {
+      const t = $('fTime').value;
+      const dias = DADOS.diario.filter(d => d.data.slice(0, 7) === mes && (t === TODOS || d.time === t));
+      if (!dias.length) {
+        $('heatSub').textContent = 'Disponível para a última apuração processada';
+        $('heatmap').innerHTML = `<div class="empty" style="padding:30px">O detalhe diário existe apenas para o último mês processado. Reprocesse ${nomeMesLongo(mes)} para vê-lo.</div>`;
+        return;
+      }
+      $('heatSub').textContent = `Horas apontadas por dia · ${nomeMesLongo(mes)}`;
+      const datas = [...new Set(dias.map(d => d.data))].sort();
+      const pessoas = {};
+      dias.forEach(d => { (pessoas[d.usuario] = pessoas[d.usuario] || { nome: d.nome, dias: {} }).dias[d.data] = d; });
+      const meta = DADOS.horasDia;
+      const corCel = d => {
+        if (!d || !d.diaUtil) return ['#eef2f8', '#aab4c5'];
+        if (d.horas <= 0) return ['#ef4444', '#fff'];
+        if (d.horas < meta * 0.5) return ['#fb923c', '#fff'];
+        if (d.horas < meta) return ['#fcd34d', '#78350f'];
+        if (d.horas <= meta + 0.01) return ['#34d399', '#064e3b'];
+        return ['#3b82f6', '#fff'];
+      };
+      const cab = datas.map(dt => { const dd = new Date(dt + 'T12:00:00'); const we = dd.getDay() === 0 || dd.getDay() === 6;
+        return `<th class="${we ? 'we' : ''}">${dt.slice(8)}<br><span style="font-weight:500">${'DSTQQSS'[dd.getDay()]}</span></th>`; }).join('');
+      const linhas = Object.values(pessoas).sort((a, b) => a.nome.localeCompare(b.nome)).map(p => `
+        <tr><td class="name" title="${esc(p.nome)}">${esc(p.nome)}</td>${datas.map(dt => {
+          const d = p.dias[dt]; const [bg, fg] = corCel(d);
+          const txt = d && d.diaUtil ? (Math.round(d.horas * 10) / 10).toString().replace('.', ',') : '';
+          return `<td class="cell" style="background:${bg};color:${fg}" title="${esc(p.nome)} · ${dt.split('-').reverse().join('/')} · ${d ? fmtH(d.horas) + 'h' : '—'}">${txt}</td>`;
+        }).join('')}</tr>`).join('');
+      $('heatmap').innerHTML = `<table class="heat"><thead><tr><th></th>${cab}</tr></thead><tbody>${linhas}</tbody></table>`;
+    }
+
+    function renderTabela(colabs) {
+      const termo = $('busca').value.trim().toLowerCase();
+      const lista = colabs.filter(c => !termo || c.nome.toLowerCase().includes(termo) || c.time.toLowerCase().includes(termo));
+      lista.sort((a, b) => {
+        const va = a[ordem.col], vb = b[ordem.col];
+        return (typeof va === 'string' ? va.localeCompare(vb) : va - vb) * ordem.dir;
+      });
+      const cols = [['nome', 'Colaborador'], ['time', 'Time'], ['esp', 'Esperadas', 1], ['ap', 'Apontadas', 1], ['np', 'Não produtivas', 1], ['exc', 'Excedentes', 1], ['perc', '% Não prod.', 1], ['status', 'Status']];
+      const seta = c => ordem.col === c ? (ordem.dir > 0 ? ' ↑' : ' ↓') : '';
+      $('tblSub').textContent = `${lista.length} colaborador(es) · clique no cabeçalho para ordenar`;
+      $('tabela').innerHTML = `<thead><tr>${cols.map(([k, t, n]) => `<th class="${n ? 'num' : ''}" data-col="${k}">${t}${seta(k)}</th>`).join('')}</tr></thead>
+        <tbody>${lista.map(c => { const [st, cls] = statusPerc(c.perc); return `<tr>
+          <td><span class="avatar" style="display:inline-grid;width:24px;height:24px;font-size:10px;vertical-align:middle;margin-right:8px;background:${corPessoa(c.nome)}">${esc(iniciais(c.nome))}</span><b>${esc(c.nome)}</b></td>
+          <td>${esc(c.time)}</td>
+          <td class="num">${fmtH(c.esp)}h</td><td class="num">${fmtH(c.ap)}h</td>
+          <td class="num" style="color:${c.np > 0 ? '#ef4444' : 'inherit'};font-weight:700">${fmtH(c.np)}h</td>
+          <td class="num" style="color:${c.exc > 0 ? '#f97316' : 'inherit'};font-weight:700">${fmtH(c.exc)}h</td>
+          <td class="num" style="color:${corPerc(c.perc)};font-weight:800">${fmtP(c.perc)}</td>
+          <td><span class="chip ${cls}">${st}</span></td></tr>`; }).join('')}</tbody>`;
+      $('tabela').querySelectorAll('th').forEach(th => th.onclick = () => {
+        const col = th.dataset.col === 'status' ? 'perc' : th.dataset.col;
+        ordem = { col, dir: ordem.col === col ? -ordem.dir : (col === 'nome' || col === 'time' ? 1 : -1) };
+        renderTabela(colabs);
+      });
+      $('tabela')._lista = lista;
+    }
+
+    function exportarCsv() {
+      const lista = $('tabela')._lista || [];
+      const linhas = [['Colaborador', 'Time', 'Esperadas', 'Apontadas', 'Não produtivas', 'Excedentes', '% Não produtivo']]
+        .concat(lista.map(c => [c.nome, c.time, c.esp, c.ap, c.np, c.exc, c.perc * 100].map(v => typeof v === 'number' ? v.toFixed(2).replace('.', ',') : v)));
+      const csv = '﻿' + linhas.map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = `capacidade_${$('fMes').value}.csv`; a.click();
+    }
+
+    function reprocessar() {
+      const mes = $('fMes').value;
+      const t = $('fTime').value === TODOS ? '' : $('fTime').value;
+      const btn = $('btnReprocessar'); btn.disabled = true;
+      loading(true, `Buscando ${mes ? nomeMesLongo(mes) : 'o mês fechado'} no Tempo…`);
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          if (!res.sucesso) { loading(false); toast(res.mensagem, true); return; }
+          toast('Mês reprocessado com sucesso!'); carregar();
+        })
+        .withFailureHandler(e => { btn.disabled = false; loading(false); toast('Falha: ' + (e.message || e), true); })
+        .buscarTimesheetTempoPeloPainel(t, mes || null);
+    }
+
+    /* ======================= Eventos ======================= */
+    $('fTime').onchange = render;
+    $('fMes').onchange = render;
+    $('btnRecarregar').onclick = carregar;
+    $('btnReprocessar').onclick = reprocessar;
+    $('busca').oninput = () => { const mes = $('fMes').value; if (mes) renderTabela(porColaborador(filtrar(mes))); };
+    $('btnCsv').onclick = exportarCsv;
+
+    carregar();
+  </script>
+</body>
+</html>
