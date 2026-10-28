@@ -561,6 +561,11 @@ function isDiaUtil_(data, feriados) {
 
 function converterNumero_(valor) {
   if (typeof valor === 'number') return valor;
+  // Número que a planilha exibiu como data (ex.: 7,25 -> 07/01/1900): volta ao valor serial
+  if (valor instanceof Date) {
+    const serial = (valor.getTime() - new Date(1899, 11, 30).getTime()) / 86400000;
+    return serial > 0 && serial < 1000 ? Math.round(serial * 10000) / 10000 : 0;
+  }
   if (!valor) return 0;
   const texto = String(valor).trim();
   if (texto.includes(',') && texto.includes('.')) return Number(texto.replace(/\./g, '').replace(',', '.')) || 0;

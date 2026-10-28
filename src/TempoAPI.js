@@ -225,7 +225,12 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const shImportar = getOrCreateSheet_(ss, CONFIG.SHEET_IMPORTAR);
   shImportar.clear();
+  shImportar.clearFormats();
   const saida = [['Nome completo', 'Nome de Usuário', 'data de Trabalho', 'Horas', 'Time']].concat(linhas);
+  // Formatos explícitos: data como texto ISO e horas como número (evita herdar formato de data)
+  const maxLinhas = Math.max(shImportar.getMaxRows(), saida.length);
+  shImportar.getRange(1, 3, maxLinhas, 1).setNumberFormat('@');
+  shImportar.getRange(1, 4, maxLinhas, 1).setNumberFormat('0.00');
   shImportar.getRange(1, 1, saida.length, saida[0].length).setValues(saida);
   shImportar.getRange(1, 1, 1, saida[0].length).setBackground('#0F5B78').setFontColor('#FFFFFF').setFontWeight('bold');
   shImportar.setFrozenRows(1);
