@@ -54,9 +54,15 @@
       .erro { background-color: #fde8e8; color: #9b1c1c; border: 1px solid #f8b4b4; }
       .loading { background-color: #e1effe; color: #1e429f; border: 1px solid #b3d1ff; }
       
-      input[type="file"] { display: none; }
-      .file-label { display: block; text-align: center; border: 2px dashed #0F5B78; padding: 12px; border-radius: 4px; color: #0F5B78; font-size: 12px; cursor: pointer; font-weight: 500; background: #f0f7f9; margin-bottom: 12px; transition: background 0.2s; }
-      .file-label:hover { background: #e1edf0; }
+      .input-field { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #334155; box-sizing: border-box; margin-bottom: 8px; }
+      .hint { font-size: 10px; color: #64748b; margin: -4px 0 10px; line-height: 1.4; }
+      details { border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 10px; margin-top: 12px; background: #f8fafc; }
+      summary { font-size: 11px; font-weight: bold; color: #0F5B78; cursor: pointer; text-transform: uppercase; }
+      .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; }
+      .badge-on { background: #def7ec; color: #03543f; }
+      .badge-off { background: #fde8e8; color: #9b1c1c; }
+      .rotina { display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin: 4px 0 10px; }
+      .times-lista { font-size: 10px; color: #475569; margin: 0 0 8px; padding-left: 16px; }
     </style>
   </head>
   <body>
@@ -77,24 +83,49 @@
         </select>
       </div>
       
-      <label for="fileJira" class="file-label" id="labelTxt">📁 Selecionar Arquivo do Jira</label>
-      <input type="file" id="fileJira" accept=".xlsx,.csv" onchange="atualizarLabel(this)">
-      
-      <button class="btn" id="btnUpload" onclick="enviarArquivo()">📥 Carregar Arquivo do Jira</button>
-      
-      <button class="btn" id="btnProcessar" onclick="executarRotina('processarTimesheetMensal')">🚀 Processar e Atualizar Histórico</button>
+      <div class="filter-group">
+        <label class="filter-label" for="mesRef">📅 Mês de referência:</label>
+        <input type="month" id="mesRef" class="input-field">
+        <div class="hint">Padrão: último mês fechado. Os apontamentos são buscados direto no Tempo pelo Team ID de cada time.</div>
+      </div>
+
+      <button class="btn" id="btnBuscar" onclick="buscarTempo()">🚀 Buscar Timesheet e Processar</button>
       <button class="btn btn-sec" id="btnRecalcular" onclick="executarRotina('recalcularBaseEHistorico')">🔄 Recalcular Ajustes Manuais</button>
-      
+
       <div id="status"></div>
+
+      <details id="boxConfig">
+        <summary>⚙️ Configurações da API</summary>
+        <div style="margin-top:10px;">
+          <div class="rotina">
+            <span>Rotina mensal automática</span>
+            <span id="badgeRotina" class="badge badge-off">…</span>
+          </div>
+          <button class="btn btn-sec" id="btnRotina" onclick="alternarRotina()">⏰ Ativar rotina mensal</button>
+
+          <label class="filter-label" for="jiraUrl">URL do Jira</label>
+          <input type="text" id="jiraUrl" class="input-field" placeholder="https://jira.totvs.com.br">
+
+          <label class="filter-label" for="jiraToken">Token da API (PAT)</label>
+          <input type="password" id="jiraToken" class="input-field" placeholder="Cole o token">
+          <div class="hint" id="tokenHint"></div>
+
+          <button class="btn" onclick="salvarConfig()">💾 Salvar Configurações</button>
+
+          <label class="filter-label">Times e Team ID (aba TIME)</label>
+          <ul class="times-lista" id="listaTimes"></ul>
+        </div>
+      </details>
     </div>
 
     <script>
-      // Disparado imediatamente ao renderizar o painel lateral
+      let rotinaAtiva = false;
+
       window.onload = function() {
         carregarListaDeTimes();
+        carregarConfig();
       };
 
-      // Alimenta o select buscando as strings exclusivas da aba TIME
       function carregarListaDeTimes() {
         google.script.run
           .withSuccessHandler(function(times) {
@@ -114,9 +145,61 @@
           .obterListaDeTimes();
       }
 
-      function atualizarLabel(input) {
-        const txt = input.files.length > 0 ? "✓ " + input.files[0].name : "📁 Selecionar Arquivo do Jira";
-        document.getElementById('labelTxt').innerText = txt;
+      function carregarConfig() {
+        google.script.run
+          .withSuccessHandler(function(cfg) {
+            document.getElementById('jiraUrl').value = cfg.jiraBaseUrl;
+            if (!document.getElementById('mesRef').value) document.getElementById('mesRef').value = cfg.mesFechadoPadrao;
+            document.getElementById('tokenHint').innerText = cfg.tokenConfigurado
+              ? '✓ Token já configurado. Deixe em branco para manter.'
+              : '⚠️ Token ainda não configurado.';
+            if (!cfg.tokenConfigurado) document.getElementById('boxConfig').open = true;
+            atualizarRotina(cfg.rotinaAtiva);
+
+            const ul = document.getElementById('listaTimes');
+            ul.innerHTML = '';
+            if (!cfg.times.length) ul.innerHTML = '<li>Nenhum time na aba TIME.</li>';
+            cfg.times.forEach(function(t) {
+              const li = document.createElement('li');
+              li.innerText = t.nome + ': ' + (t.teamId || '⚠️ sem Team ID');
+              ul.appendChild(li);
+            });
+          })
+          .withFailureHandler(function(err) { mostrarStatus('Erro ao ler configurações: ' + err, 'erro'); })
+          .obterConfiguracoesTempo();
+      }
+
+      function atualizarRotina(ativa) {
+        rotinaAtiva = ativa;
+        const b = document.getElementById('badgeRotina');
+        b.innerText = ativa ? 'ATIVA' : 'DESATIVADA';
+        b.className = 'badge ' + (ativa ? 'badge-on' : 'badge-off');
+        document.getElementById('btnRotina').innerText = ativa ? '⏸️ Desativar rotina mensal' : '⏰ Ativar rotina mensal';
+      }
+
+      function alternarRotina() {
+        mostrarStatus('Atualizando rotina...', 'loading');
+        const runner = google.script.run
+          .withSuccessHandler(function(res) {
+            mostrarStatus(res.mensagem, res.sucesso ? 'sucesso' : 'erro');
+            if (res.sucesso) atualizarRotina(!rotinaAtiva);
+          })
+          .withFailureHandler(function(err) { mostrarStatus('Erro: ' + err, 'erro'); });
+        rotinaAtiva ? runner.desativarRotinaMensal() : runner.ativarRotinaMensal();
+      }
+
+      function salvarConfig() {
+        mostrarStatus('Salvando...', 'loading');
+        google.script.run
+          .withSuccessHandler(function(res) {
+            mostrarStatus(res.mensagem, res.sucesso ? 'sucesso' : 'erro');
+            if (res.sucesso) { document.getElementById('jiraToken').value = ''; carregarConfig(); }
+          })
+          .withFailureHandler(function(err) { mostrarStatus('Erro: ' + err, 'erro'); })
+          .salvarConfiguracoesTempo({
+            jiraBaseUrl: document.getElementById('jiraUrl').value,
+            jiraToken: document.getElementById('jiraToken').value
+          });
       }
 
       function mostrarStatus(msg, tipo) {
@@ -126,35 +209,22 @@
         div.innerText = msg;
       }
 
-      function enviarArquivo() {
-        const fileInput = document.getElementById('fileJira');
-        if (fileInput.files.length === 0) {
-          mostrarStatus('Por favor, selecione um arquivo primeiro.', 'erro');
-          return;
-        }
-        
-        const file = fileInput.files[0];
-        const fr = new FileReader();
-        mostrarStatus('Convertendo e carregando arquivo...', 'loading');
-        
-        fr.onload = function(e) {
-          const base64Str = e.target.result.split(',')[1];
-          const fileObj = { data: base64Str, mimeType: file.type, name: file.name };
-          
-          google.script.run
-            .withSuccessHandler(function(res) {
-              if (res.sucesso) {
-                mostrarStatus(res.mensagem, 'sucesso');
-              } else {
-                mostrarStatus(res.mensagem, 'erro');
-              }
-            })
-            .withFailureHandler(function(err) {
-              mostrarStatus('Erro na requisição da cloud: ' + err, 'erro');
-            })
-            .importarDadosJira(fileObj);
-        };
-        fr.readAsDataURL(file);
+      function buscarTempo() {
+        const timeSelecionado = document.getElementById('comboTimes').value;
+        const mesRef = document.getElementById('mesRef').value;
+        const btn = document.getElementById('btnBuscar');
+        btn.disabled = true;
+        mostrarStatus('Buscando apontamentos no Tempo e processando o mês...', 'loading');
+        google.script.run
+          .withSuccessHandler(function(res) {
+            btn.disabled = false;
+            mostrarStatus(res.mensagem, res.sucesso ? 'sucesso' : 'erro');
+          })
+          .withFailureHandler(function(err) {
+            btn.disabled = false;
+            mostrarStatus('Falha: ' + err, 'erro');
+          })
+          .buscarTimesheetTempoPeloPainel(timeSelecionado, mesRef);
       }
 
       function executarRotina(nomeFuncao) {

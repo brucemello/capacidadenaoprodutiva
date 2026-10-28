@@ -21,11 +21,22 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('📊 Capacity Multi-Time')
     .addItem('Abrir Painel Lateral', 'abrirPainelLateral')
+    .addItem('🔄 Buscar Mês Fechado (API Tempo)', 'buscarMesFechadoPeloMenu')
     .addSeparator()
     .addSubMenu(SpreadsheetApp.getUi().createMenu('Configurações')
       .addItem('Instalar/Atualizar Estrutura', 'inicializarOuAtualizarEstrutura')
+      .addItem('⏰ Ativar Rotina Mensal Automática', 'ativarRotinaMensalPeloMenu')
     )
     .addToUi();
+}
+
+function buscarMesFechadoPeloMenu() {
+  const res = buscarTimesheetTempoPeloPainel('', null);
+  SpreadsheetApp.getUi().alert(res.mensagem);
+}
+
+function ativarRotinaMensalPeloMenu() {
+  SpreadsheetApp.getUi().alert(ativarRotinaMensal().mensagem);
 }
 
 function abrirPainelLateral() {
@@ -82,6 +93,7 @@ function inicializarOuAtualizarEstrutura() {
   getOrCreateSheet_(ss, CONFIG.SHEET_HISTORICO);
   getOrCreateSheet_(ss, CONFIG.SHEET_RESUMO_TIME);
   getOrCreateSheet_(ss, CONFIG.SHEET_LOGS);
+  garantirColunaTeamId_();
   registrarLog_('Inicialização do Sistema', 'SUCESSO', 'Estrutura de abas verificada e instalada.');
   SpreadsheetApp.getUi().alert('Estrutura validada com sucesso!');
 }
@@ -111,7 +123,13 @@ function importarDadosJira(fileObject) {
   }
 }
 
-function processarTimesheetMensal(timeSelecionado) {
+/**
+ * @param {string} timeSelecionado  Time do filtro do painel ('' = todos)
+ * @param {Object} [opcoes]          Usado pela busca da API Tempo:
+ *        inicio/fim (Date) = período exato do mês; timesProcessados = times buscados
+ */
+function processarTimesheetMensal(timeSelecionado, opcoes) {
+  opcoes = opcoes || {};
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const shImportar = getOrCreateSheet_(ss, CONFIG.SHEET_IMPORTAR);
   const shTimesheet = getOrCreateSheet_(ss, CONFIG.SHEET_TIMESHEET);
@@ -124,6 +142,7 @@ function processarTimesheetMensal(timeSelecionado) {
   const idxUsuario = header.indexOf('Nome de Usuário');
   const idxDataTrabalho = header.indexOf('data de Trabalho');
   const idxHoras = header.indexOf('Horas');
+  const idxTime = header.indexOf('Time');
 
   if (idxNome === -1 || idxUsuario === -1 || idxDataTrabalho === -1 || idxHoras === -1) {
     throw new Error(`Colunas necessárias não encontradas. Cabeçalho lido: ${header.join(' | ')}`);
@@ -134,6 +153,7 @@ function processarTimesheetMensal(timeSelecionado) {
   let dataMinima = null;
   let dataMaxima = null;
   const mapaUsuariosNomes = {};
+  const mapaUsuariosTime = {};
 
   for (let r = 1; r < dados.length; r++) {
     const nome = dados[r][idxNome];
@@ -154,14 +174,25 @@ function processarTimesheetMensal(timeSelecionado) {
     const chaveUnica = usuario + '|' + dataChave;
 
     mapaUsuariosNomes[usuario] = nome;
+    if (idxTime !== -1 && dados[r][idxTime]) mapaUsuariosTime[usuario] = String(dados[r][idxTime]).trim();
 
     if (!apontamentosJira[chaveUnica]) apontamentosJira[chaveUnica] = 0;
     apontamentosJira[chaveUnica] += horasLançadas;
   }
 
-  if (timeSelecionado && timeSelecionado !== "") {
+  if (Object.keys(mapaUsuariosTime).length > 0) {
+    // Base vinda da API Tempo: cada usuário já traz o time de origem
+    atualizarTimeNaAbaConfig_(usuariosNoArquivoAtuais, mapaUsuariosNomes, timeSelecionado, mapaUsuariosTime);
+  } else if (timeSelecionado && timeSelecionado !== "") {
     atualizarTimeNaAbaConfig_(usuariosNoArquivoAtuais, mapaUsuariosNomes, timeSelecionado);
   }
+
+  if (opcoes.inicio && opcoes.fim) {
+    dataMinima = new Date(opcoes.inicio.getTime());
+    dataMaxima = new Date(opcoes.fim.getTime());
+  }
+  if (!dataMinima || !dataMaxima) throw new Error('Nenhum apontamento válido encontrado para processar.');
+  const timesPermitidos = opcoes.timesProcessados ? new Set(opcoes.timesProcessados) : null;
 
   const configTime = carregarConfigTime_();
   const feriados = carregarFeriados_();
@@ -194,6 +225,9 @@ function processarTimesheetMensal(timeSelecionado) {
 
     if (timeSelecionado && timeSelecionado !== "" && conf.time !== timeSelecionado) {
       return; 
+    }
+    if (timesPermitidos && !timesPermitidos.has(conf.time)) {
+      return;
     }
 
     const considerarFinal = String(conf.considerar).trim().toUpperCase();
@@ -241,7 +275,7 @@ function processarTimesheetMensal(timeSelecionado) {
   atualizarBaseColaborador_();
 }
 
-function atualizarTimeNaAbaConfig_(usuariosSet, mapaNomes, timeSelecionado) {
+function atualizarTimeNaAbaConfig_(usuariosSet, mapaNomes, timeSelecionado, mapaTimePorUsuario) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const shConfig = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
   const dadosConfig = shConfig.getDataRange().getValues();
@@ -253,11 +287,15 @@ function atualizarTimeNaAbaConfig_(usuariosSet, mapaNomes, timeSelecionado) {
   }
   
   usuariosSet.forEach(user => {
+    const timeDoUsuario = (mapaTimePorUsuario && mapaTimePorUsuario[user]) || timeSelecionado;
+    if (!timeDoUsuario) return;
     if (mapaLinhasConfig[user]) {
-      shConfig.getRange(mapaLinhasConfig[user], 4).setValue(timeSelecionado);
+      shConfig.getRange(mapaLinhasConfig[user], 4).setValue(timeDoUsuario);
     } else {
       const novoNome = mapaNomes[user] || user;
-      shConfig.appendRow([novoNome, user, 'SIM', timeSelecionado, 'Inserido via painel de importação']);
+      const origem = mapaTimePorUsuario ? 'Inserido automaticamente (API Tempo)' : 'Inserido via painel de importação';
+      shConfig.appendRow([novoNome, user, 'SIM', timeDoUsuario, origem]);
+      mapaLinhasConfig[user] = shConfig.getLastRow();
     }
   });
   SpreadsheetApp.flush();
