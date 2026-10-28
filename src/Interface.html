@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: 'Segoe UI', Arial, sans-serif; padding: 12px; color: #333; background-color: #fcfcfc; margin: 0; }
+      .container { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+      h3 { margin-top: 0; color: #0F5B78; font-size: 15px; border-bottom: 2px solid #0F5B78; padding-bottom: 4px; margin-bottom: 12px; }
+      p { font-size: 11px; color: #666; line-height: 1.4; margin-bottom: 15px; }
+      
+      /* Botão de Destaque do Looker Studio */
+      .btn-looker {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        background-color: #4285F4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 12px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        box-sizing: border-box;
+        box-shadow: 0 2px 4px rgba(66, 133, 244, 0.2);
+        transition: background 0.2s;
+      }
+      .btn-looker:hover {
+        background-color: #357ae8;
+      }
+
+      .divisor {
+        border: 0;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 15px;
+        margin-bottom: 15px;
+      }
+
+      /* Filtro por Squad / Time */
+      .filter-group { margin-bottom: 15px; }
+      .filter-label { display: block; font-size: 11px; font-weight: bold; color: #0F5B78; margin-bottom: 5px; text-transform: uppercase; }
+      .select-field { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #334155; background-color: #fff; box-sizing: border-box; cursor: pointer; font-weight: 500; }
+      .select-field:focus { outline: none; border-color: #0F5B78; box-shadow: 0 0 0 2px rgba(15, 91, 120, 0.1); }
+      
+      .btn { display: block; width: 100%; padding: 10px; margin-bottom: 10px; background-color: #0F5B78; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; transition: background 0.2s; box-sizing: border-box; }
+      .btn:hover { background-color: #0a4359; }
+      .btn-sec { background-color: #e2e8f0; color: #4a5568; }
+      .btn-sec:hover { background-color: #cbd5e1; }
+      
+      #status { margin-top: 12px; padding: 10px; border-radius: 4px; font-size: 11px; font-weight: 500; display: none; overflow-wrap: break-word; }
+      .sucesso { background-color: #def7ec; color: #03543f; border: 1px solid #bcf0da; }
+      .erro { background-color: #fde8e8; color: #9b1c1c; border: 1px solid #f8b4b4; }
+      .loading { background-color: #e1effe; color: #1e429f; border: 1px solid #b3d1ff; }
+      
+      input[type="file"] { display: none; }
+      .file-label { display: block; text-align: center; border: 2px dashed #0F5B78; padding: 12px; border-radius: 4px; color: #0F5B78; font-size: 12px; cursor: pointer; font-weight: 500; background: #f0f7f9; margin-bottom: 12px; transition: background 0.2s; }
+      .file-label:hover { background: #e1edf0; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>Painel Operational Capacity</h3>
+      <p>Mapeamento de squads, consolidações e expurgos não produtivos em lote.</p>
+      
+      <a href="https://datastudio.google.com/s/sGmJZ1Glc40" target="_blank" class="btn-looker">
+        📊 Abrir Dashboard no Looker Studio ↗
+      </a>
+
+      <hr class="divisor">
+
+      <div class="filter-group">
+        <label class="filter-label" for="comboTimes">🎯 Selecionar Time para Operação:</label>
+        <select id="comboTimes" class="select-field">
+          <option value="">-- Todos os Times (Geral) --</option>
+        </select>
+      </div>
+      
+      <label for="fileJira" class="file-label" id="labelTxt">📁 Selecionar Arquivo do Jira</label>
+      <input type="file" id="fileJira" accept=".xlsx,.csv" onchange="atualizarLabel(this)">
+      
+      <button class="btn" id="btnUpload" onclick="enviarArquivo()">📥 Carregar Arquivo do Jira</button>
+      
+      <button class="btn" id="btnProcessar" onclick="executarRotina('processarTimesheetMensal')">🚀 Processar e Atualizar Histórico</button>
+      <button class="btn btn-sec" id="btnRecalcular" onclick="executarRotina('recalcularBaseEHistorico')">🔄 Recalcular Ajustes Manuais</button>
+      
+      <div id="status"></div>
+    </div>
+
+    <script>
+      // Disparado imediatamente ao renderizar o painel lateral
+      window.onload = function() {
+        carregarListaDeTimes();
+      };
+
+      // Alimenta o select buscando as strings exclusivas da aba TIME
+      function carregarListaDeTimes() {
+        google.script.run
+          .withSuccessHandler(function(times) {
+            const combo = document.getElementById('comboTimes');
+            times.forEach(function(time) {
+              if (time) {
+                let opt = document.createElement('option');
+                opt.value = time;
+                opt.innerText = time;
+                combo.appendChild(opt);
+              }
+            });
+          })
+          .withFailureHandler(function(err) {
+            console.error('Falha interna ao requisitar lista de squads: ', err);
+          })
+          .obterListaDeTimes();
+      }
+
+      function atualizarLabel(input) {
+        const txt = input.files.length > 0 ? "✓ " + input.files[0].name : "📁 Selecionar Arquivo do Jira";
+        document.getElementById('labelTxt').innerText = txt;
+      }
+
+      function mostrarStatus(msg, tipo) {
+        const div = document.getElementById('status');
+        div.style.display = 'block';
+        div.className = tipo;
+        div.innerText = msg;
+      }
+
+      function enviarArquivo() {
+        const fileInput = document.getElementById('fileJira');
+        if (fileInput.files.length === 0) {
+          mostrarStatus('Por favor, selecione um arquivo primeiro.', 'erro');
+          return;
+        }
+        
+        const file = fileInput.files[0];
+        const fr = new FileReader();
+        mostrarStatus('Convertendo e carregando arquivo...', 'loading');
+        
+        fr.onload = function(e) {
+          const base64Str = e.target.result.split(',')[1];
+          const fileObj = { data: base64Str, mimeType: file.type, name: file.name };
+          
+          google.script.run
+            .withSuccessHandler(function(res) {
+              if (res.sucesso) {
+                mostrarStatus(res.mensagem, 'sucesso');
+              } else {
+                mostrarStatus(res.mensagem, 'erro');
+              }
+            })
+            .withFailureHandler(function(err) {
+              mostrarStatus('Erro na requisição da cloud: ' + err, 'erro');
+            })
+            .importarDadosJira(fileObj);
+        };
+        fr.readAsDataURL(file);
+      }
+
+      function executarRotina(nomeFuncao) {
+        const timeSelecionado = document.getElementById('comboTimes').value;
+        
+        mostrarStatus('Processando banco de dados analítico...', 'loading');
+        
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res.sucesso) {
+              mostrarStatus(res.mensagem, 'sucesso');
+            } else {
+              mostrarStatus(res.mensagem, 'erro');
+            }
+          })
+          .withFailureHandler(function(err) {
+            mostrarStatus('Falha interna de processamento: ' + err, 'erro');
+          })
+          .executarFuncaoPeloPainel(nomeFuncao, timeSelecionado); 
+      }
+    </script>
+  </body>
+</html>
