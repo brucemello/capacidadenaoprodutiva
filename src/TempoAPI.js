@@ -236,7 +236,7 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   shImportar.setFrozenRows(1);
 
   // Membros do time sem nenhum apontamento no mês também entram (com 0h)
-  registrarMembrosNaConfig_(membrosPorTime);
+  registrarMembrosNaConfig_(membrosPorTime, new Set(linhas.map(l => l[1])));
 
   processarTimesheetMensal(timeSelecionado, {
     inicio: periodo.inicio,
@@ -360,7 +360,7 @@ function identificarAutor_(wl) {
 /* =============================================================================
  * CONFIG_TIME: garante membros do time cadastrados
  * ===========================================================================*/
-function registrarMembrosNaConfig_(membrosPorTime) {
+function registrarMembrosNaConfig_(membrosPorTime, usuariosComApontamento) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
   const dados = sh.getDataRange().getValues();
@@ -373,7 +373,11 @@ function registrarMembrosNaConfig_(membrosPorTime) {
   membrosPorTime.forEach(t => t.membros.forEach(m => {
     if (existentes[m.name]) return;
     existentes[m.name] = true;
-    novos.push([m.displayName, m.name, 'SIM', t.time, 'Inserido automaticamente (membro do time no Tempo)']);
+    // Sem nenhum apontamento no mês: entra como NÃO para revisão (evita contas duplicadas/ex-membros com 100% não produtivo)
+    const apontou = usuariosComApontamento && usuariosComApontamento.has(m.name);
+    novos.push(apontou
+      ? [m.displayName, m.name, 'SIM', t.time, 'Inserido automaticamente (membro do time no Tempo)']
+      : [m.displayName, m.name, 'NÃO', t.time, 'Membro do time no Tempo sem apontamentos no mês. Marque SIM se fizer parte da capacidade.']);
   }));
   if (novos.length) sh.getRange(sh.getLastRow() + 1, 1, novos.length, novos[0].length).setValues(novos);
 }
