@@ -40,6 +40,20 @@ jobs:
       - name: Enviar código (clasp push)
         run: clasp push --force
 
+      - name: Conferir código publicado
+        run: |
+          mkdir -p /tmp/remoto
+          jq '.rootDir="/tmp/remoto"' .clasp.json > /tmp/c.json
+          cp .clasp.json /tmp/clasp.bak && cp /tmp/c.json .clasp.json
+          clasp pull
+          cp /tmp/clasp.bak .clasp.json
+          if diff -rq src /tmp/remoto; then
+            echo "::notice title=Verificado::Código no Apps Script idêntico ao repositório"
+          else
+            echo "::error title=Divergência::O Apps Script não ficou igual ao repositório: $(diff -rq src /tmp/remoto | tr '\n' ' ')"
+            exit 1
+          fi
+
       - name: Atualizar implantação (Web App)
         env:
           DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
