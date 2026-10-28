@@ -32,6 +32,7 @@ function obterConfiguracoesTempo() {
     jiraBaseUrl: props.getProperty(CHAVES_TEMPO.JIRA_BASE_URL) || TEMPO.URL_PADRAO,
     tokenConfigurado: !!token,
     rotinaAtiva: ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === TEMPO.FUNCAO_ROTINA),
+    rotinaAusenciasAtiva: ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'rotinaDiariaAusencias'),
     mesFechadoPadrao: Utilities.formatDate(primeiroDiaMesAnterior_(new Date()), CONFIG.TIMEZONE, 'yyyy-MM'),
     times: obterTimesComTeamId_().map(t => ({ nome: t.nome, teamId: t.teamId }))
   };
@@ -145,7 +146,13 @@ function ativarRotinaMensal() {
       .atHour(TEMPO.HORA_ROTINA_MENSAL)
       .inTimezone(CONFIG.TIMEZONE)
       .create();
-    const msg = `Rotina ativada: todo dia ${TEMPO.DIA_ROTINA_MENSAL} às ${TEMPO.HORA_ROTINA_MENSAL}h busca o mês fechado anterior.`;
+    ScriptApp.newTrigger('rotinaDiariaAusencias')
+      .timeBased()
+      .everyDays(1)
+      .atHour(6)
+      .inTimezone(CONFIG.TIMEZONE)
+      .create();
+    const msg = `Rotina ativada: todo dia ${TEMPO.DIA_ROTINA_MENSAL} às ${TEMPO.HORA_ROTINA_MENSAL}h busca o mês fechado anterior; ausências sincronizadas diariamente às 6h.`;
     registrarLog_('Rotina Mensal', 'SUCESSO', msg);
     return { sucesso: true, mensagem: msg };
   } catch (e) {
@@ -161,7 +168,7 @@ function desativarRotinaMensal() {
 
 function removerGatilhosRotina_() {
   ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === TEMPO.FUNCAO_ROTINA)
+    .filter(t => [TEMPO.FUNCAO_ROTINA, 'rotinaDiariaAusencias'].indexOf(t.getHandlerFunction()) >= 0)
     .forEach(t => ScriptApp.deleteTrigger(t));
 }
 
@@ -238,6 +245,19 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   // Membros do time sem nenhum apontamento no mês também entram (com 0h)
   registrarMembrosNaConfig_(membrosPorTime, new Set(linhas.map(l => l[1])));
 
+  // Atualiza ausências (agenda + planilha de férias) dos times processados antes de calcular
+  let msgAus = '';
+  try {
+    const fontes = obterFontesAusenciaPorTime_().filter(f => (f.agenda || f.planilhaFerias) && times.some(t => t.nome === f.time));
+    if (fontes.length) {
+      sincronizarAusencias_(fontes.length === 1 ? fontes[0].time : timeSelecionado);
+      msgAus = ' | Ausências sincronizadas: ' + fontes.map(f => f.time).join(', ');
+    }
+  } catch (e) {
+    msgAus = ' | Aviso: ausências não sincronizadas (' + e.message + ')';
+    registrarLog_('Sincronização de Ausências', 'ERRO', e.toString());
+  }
+
   processarTimesheetMensal(timeSelecionado, {
     inicio: periodo.inicio,
     fim: periodo.fim,
@@ -247,6 +267,7 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   const mesTxt = Utilities.formatDate(periodo.inicio, CONFIG.TIMEZONE, 'MM/yyyy');
   let msg = `Mês ${mesTxt} processado via API Tempo. ${resumoTimes.join(' | ')}`;
   if (semId.length) msg += ` | Sem Team ID (ignorados): ${semId.join(', ')}`;
+  msg += msgAus;
   registrarLog_('Busca API Tempo', 'SUCESSO', msg);
   return msg;
 }

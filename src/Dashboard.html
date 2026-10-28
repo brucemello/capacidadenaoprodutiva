@@ -258,7 +258,7 @@
     <!-- Linha 3 -->
     <section class="grid row-3">
       <div class="card">
-        <div class="card-head"><div><h2>Capacidade por colaborador</h2><div class="card-sub">Horas produtivas, não produtivas e excedentes</div></div></div>
+        <div class="card-head"><div><h2>Capacidade por colaborador</h2><div class="card-sub">Horas produtivas, não produtivas, excedentes e ausências justificadas</div></div></div>
         <div class="chart-box" id="boxColab"><canvas id="chColab"></canvas></div>
       </div>
       <div class="card">
@@ -277,6 +277,8 @@
           <span><i style="background:#fcd34d"></i>&lt; meta</span>
           <span><i style="background:#34d399"></i>meta</span>
           <span><i style="background:#3b82f6"></i>acima</span>
+          <span><i style="background:#a78bfa"></i>ausência (A)</span>
+          <span><i style="background:#fcd34d;box-shadow:inset 0 -3px 0 #7c3aed"></i>ausência parcial</span>
           <span><i style="background:#eef2f8"></i>não útil</span>
         </div>
       </div>
@@ -324,6 +326,17 @@
         </section>
 
         <section class="card">
+          <div class="card-head"><div><h2>Ausências e férias</h2><div class="card-sub">Agenda de ausências e planilha de férias de cada time</div></div>
+            <button class="btn btn-soft" data-goto="ausencias">Ver ausências</button></div>
+          <div class="team-list" id="gFontes" style="margin-bottom:12px"></div>
+          <p class="hint">A sincronização roda sozinha todo dia às 6h (com a rotina ativa) e antes de cada geração. Depois de sincronizar, use "Recalcular ajustes manuais" para refletir no mês já gerado.</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnSyncAus">🔄 Sincronizar agora</button>
+            <button class="btn btn-line" id="btnSyncRecalc">🔄 Sincronizar e recalcular</button>
+          </div>
+        </section>
+
+        <section class="card">
           <div class="card-head"><div><h2>Conexão com o Tempo</h2><div class="card-sub">URL do Jira e token pessoal (PAT)</div></div></div>
           <div class="form-row">
             <div class="fld"><label for="gUrl">URL do Jira</label><input class="inp" id="gUrl" placeholder="https://jiraproducao.totvs.com.br"></div>
@@ -363,6 +376,7 @@
         <div class="table-tools">
           <select class="inp" id="ctlFiltroTime" style="width:auto;padding:8px 10px"></select>
           <input class="search" id="ctlBusca" placeholder="Buscar…">
+          <button class="btn btn-soft" id="btnAcaoCad" style="display:none"></button>
           <button class="btn btn-soft" id="btnAddLinha">＋ Nova linha</button>
         </div>
       </div>
@@ -446,21 +460,24 @@
       return DADOS.historico.filter(r => r.mes === mes && (t === TODOS || r.time === t) && r.considerar !== 'NÃO');
     }
     function totais(linhas) {
-      const o = { esp: 0, ap: 0, np: 0, exc: 0, pessoas: new Set() };
+      const o = { esp: 0, ap: 0, np: 0, exc: 0, aus: 0, pessoas: new Set() };
       linhas.forEach(r => {
-        o.esp += r.esperadas; o.ap += r.apontadas; o.np += r.naoProdutivas;
+        o.esp += r.esperadas; o.ap += r.apontadas; o.np += r.naoProdutivas; o.aus += r.ausencia || 0;
         o.exc += Math.max(r.apontadas - r.esperadas, 0); o.pessoas.add(r.usuario);
       });
       o.perc = o.esp > 0 ? o.np / o.esp : 0;
       o.cobertura = o.esp > 0 ? Math.min(o.ap / o.esp, 9.99) : 0;
+      o.bruta = o.esp + o.aus;
+      o.percAus = o.bruta > 0 ? o.aus / o.bruta : 0;
+      o.percBruto = o.bruta > 0 ? (o.np + o.aus) / o.bruta : 0;
       return o;
     }
     function porColaborador(linhas) {
       const m = {};
       linhas.forEach(r => {
         const k = r.usuario;
-        if (!m[k]) m[k] = { nome: r.nome, usuario: r.usuario, time: r.time, esp: 0, ap: 0, np: 0 };
-        m[k].esp += r.esperadas; m[k].ap += r.apontadas; m[k].np += r.naoProdutivas;
+        if (!m[k]) m[k] = { nome: r.nome, usuario: r.usuario, time: r.time, esp: 0, ap: 0, np: 0, aus: 0 };
+        m[k].esp += r.esperadas; m[k].ap += r.apontadas; m[k].np += r.naoProdutivas; m[k].aus += r.ausencia || 0;
       });
       return Object.values(m).map(c => ({ ...c, exc: Math.max(c.ap - c.esp, 0), perc: c.esp > 0 ? c.np / c.esp : 0 }));
     }
@@ -527,14 +544,15 @@
             <div class="kpi-label">% Não produtivo</div>
             <div class="status-pill ${stCls}">● ${stTxt}</div>
             ${delta(a.perc, b.perc, temB, true, 'p')}
+            ${a.aus > 0 ? `<div class="delta neutral" title="Sem abater ausências justificadas">Sem abater ausências: ${fmtP(a.percBruto)}</div>` : ''}
           </div>
         </div>
-        ${card('Horas esperadas', '🎯', '#3b82f6', fmtH(a.esp, 0), 'h', delta(a.esp, b.esp, temB, false, 'h').replace(/delta (good|bad)/, 'delta neutral'))}
+        ${card('Horas esperadas', '🎯', '#3b82f6', fmtH(a.esp, 0), 'h', a.aus > 0 ? `<div class="delta neutral">de ${fmtH(a.bruta, 0)}h de capacidade bruta</div>` : delta(a.esp, b.esp, temB, false, 'h').replace(/delta (good|bad)/, 'delta neutral'))}
         ${card('Horas apontadas', '⏱️', '#10b981', fmtH(a.ap), 'h', `<div class="delta neutral">${fmtP(a.cobertura)} da meta</div>`)}
         ${card('Não produtivas', '⚠️', '#ef4444', fmtH(a.np), 'h', delta(a.np, b.np, temB, true, 'h'))}
         ${card('Horas excedentes', '🚀', '#f97316', fmtH(a.exc), 'h', delta(a.exc, b.exc, temB, true, 'h'))}
-        ${card('Na capacidade', '👥', '#8b5cf6', a.pessoas.size, '', delta(a.pessoas.size, b.pessoas.size, temB, false, 'n').replace(/delta (good|bad)/, 'delta neutral'))}
-        ${card('Fora da capacidade', '🚫', '#64748b', fora, '', `<div class="delta neutral">marcados como NÃO</div>`)}
+        ${card('Ausências justificadas', '🌴', '#8b5cf6', fmtH(a.aus), 'h', `<div class="delta neutral">${fmtP(a.percAus)} da capacidade bruta</div>`)}
+        ${card('Na capacidade', '👥', '#0ea5e9', a.pessoas.size, '', `<div class="delta neutral">${fora} fora da capacidade (NÃO)</div>`)}
       `;
     }
 
@@ -616,7 +634,8 @@
           datasets: [
             { label: 'Produtivas', data: lista.map(c => Math.min(c.ap, c.esp)), backgroundColor: '#10b981' },
             { label: 'Não produtivas', data: lista.map(c => c.np), backgroundColor: '#ef4444' },
-            { label: 'Excedentes', data: lista.map(c => c.exc), backgroundColor: '#f97316' }
+            { label: 'Excedentes', data: lista.map(c => c.exc), backgroundColor: '#f97316' },
+            { label: 'Ausência justificada', data: lista.map(c => c.aus), backgroundColor: '#a78bfa' }
           ].map(d => ({ ...d, borderRadius: 4, borderSkipped: false, barThickness: 18,
             datalabels: { display: ctx => ctx.dataset.data[ctx.dataIndex] >= 12, color: '#fff', font: { weight: 700, size: 10.5 }, formatter: v => fmtH(v) } }))
         },
@@ -625,7 +644,7 @@
           plugins: { legend: { position: 'bottom' },
             tooltip: { callbacks: {
               label: c => ` ${c.dataset.label}: ${fmtH(c.raw)}h`,
-              afterBody: items => { const c = lista[items[0].dataIndex]; return [`Esperadas: ${fmtH(c.esp)}h`, `Apontadas: ${fmtH(c.ap)}h`, `% não produtivo: ${fmtP(c.perc)}`]; }
+              afterBody: items => { const c = lista[items[0].dataIndex]; return [`Esperadas: ${fmtH(c.esp)}h`, `Apontadas: ${fmtH(c.ap)}h`, `Ausência justificada: ${fmtH(c.aus)}h`, `% não produtivo: ${fmtP(c.perc)}`]; }
             } } },
           scales: {
             x: { stacked: true, grid: { color: '#eef2f8' }, ticks: { callback: v => v + 'h' } },
@@ -664,6 +683,7 @@
       const meta = DADOS.horasDia;
       const corCel = d => {
         if (!d || !d.diaUtil) return ['#eef2f8', '#aab4c5'];
+        if (d.ausencia >= meta - 0.01 && d.horas <= 0) return ['#a78bfa', '#fff'];
         if (d.horas <= 0) return ['#ef4444', '#fff'];
         if (d.horas < meta * 0.5) return ['#fb923c', '#fff'];
         if (d.horas < meta) return ['#fcd34d', '#78350f'];
@@ -675,8 +695,11 @@
       const linhas = Object.values(pessoas).sort((a, b) => a.nome.localeCompare(b.nome)).map(p => `
         <tr><td class="name" title="${esc(p.nome)}">${esc(p.nome)}</td>${datas.map(dt => {
           const d = p.dias[dt]; const [bg, fg] = corCel(d);
-          const txt = d && d.diaUtil ? (Math.round(d.horas * 10) / 10).toString().replace('.', ',') : '';
-          return `<td class="cell" style="background:${bg};color:${fg}" title="${esc(p.nome)} · ${dt.split('-').reverse().join('/')} · ${d ? fmtH(d.horas) + 'h' : '—'}">${txt}</td>`;
+          const ausTotal = d && d.diaUtil && d.ausencia >= meta - 0.01 && d.horas <= 0;
+          const txt = !d || !d.diaUtil ? '' : ausTotal ? 'A' : (Math.round(d.horas * 10) / 10).toString().replace('.', ',');
+          const parcial = d && d.diaUtil && d.ausencia > 0 && !ausTotal;
+          const tip = `${p.nome} · ${dt.split('-').reverse().join('/')} · ${d ? fmtH(d.horas) + 'h apontadas' : '—'}${d && d.ausencia > 0 ? ` · ausência ${fmtH(d.ausencia)}h: ${d.motivo}` : ''}`;
+          return `<td class="cell" style="background:${bg};color:${fg};${parcial ? 'box-shadow:inset 0 -4px 0 #7c3aed;' : ''}" title="${esc(tip)}">${txt}</td>`;
         }).join('')}</tr>`).join('');
       $('heatmap').innerHTML = `<table class="heat"><thead><tr><th></th>${cab}</tr></thead><tbody>${linhas}</tbody></table>`;
     }
@@ -688,7 +711,7 @@
         const va = a[ordem.col], vb = b[ordem.col];
         return (typeof va === 'string' ? va.localeCompare(vb) : va - vb) * ordem.dir;
       });
-      const cols = [['nome', 'Colaborador'], ['time', 'Time'], ['esp', 'Esperadas', 1], ['ap', 'Apontadas', 1], ['np', 'Não produtivas', 1], ['exc', 'Excedentes', 1], ['perc', '% Não prod.', 1], ['status', 'Status']];
+      const cols = [['nome', 'Colaborador'], ['time', 'Time'], ['esp', 'Esperadas', 1], ['ap', 'Apontadas', 1], ['np', 'Não produtivas', 1], ['exc', 'Excedentes', 1], ['aus', 'Ausências', 1], ['perc', '% Não prod.', 1], ['status', 'Status']];
       const seta = c => ordem.col === c ? (ordem.dir > 0 ? ' ↑' : ' ↓') : '';
       $('tblSub').textContent = `${lista.length} colaborador(es) · clique no cabeçalho para ordenar`;
       $('tabela').innerHTML = `<thead><tr>${cols.map(([k, t, n]) => `<th class="${n ? 'num' : ''}" data-col="${k}">${t}${seta(k)}</th>`).join('')}</tr></thead>
@@ -698,6 +721,7 @@
           <td class="num">${fmtH(c.esp)}h</td><td class="num">${fmtH(c.ap)}h</td>
           <td class="num" style="color:${c.np > 0 ? '#ef4444' : 'inherit'};font-weight:700">${fmtH(c.np)}h</td>
           <td class="num" style="color:${c.exc > 0 ? '#f97316' : 'inherit'};font-weight:700">${fmtH(c.exc)}h</td>
+          <td class="num" style="color:${c.aus > 0 ? '#7c3aed' : 'inherit'};font-weight:700">${fmtH(c.aus)}h</td>
           <td class="num" style="color:${corPerc(c.perc)};font-weight:800">${fmtP(c.perc)}</td>
           <td><span class="chip ${cls}">${st}</span></td></tr>`; }).join('')}</tbody>`;
       $('tabela').querySelectorAll('th').forEach(th => th.onclick = () => {
@@ -710,8 +734,8 @@
 
     function exportarCsv() {
       const lista = $('tabela')._lista || [];
-      const linhas = [['Colaborador', 'Time', 'Esperadas', 'Apontadas', 'Não produtivas', 'Excedentes', '% Não produtivo']]
-        .concat(lista.map(c => [c.nome, c.time, c.esp, c.ap, c.np, c.exc, c.perc * 100].map(v => typeof v === 'number' ? v.toFixed(2).replace('.', ',') : v)));
+      const linhas = [['Colaborador', 'Time', 'Esperadas', 'Apontadas', 'Não produtivas', 'Excedentes', 'Ausências justificadas', '% Não produtivo']]
+        .concat(lista.map(c => [c.nome, c.time, c.esp, c.ap, c.np, c.exc, c.aus, c.perc * 100].map(v => typeof v === 'number' ? v.toFixed(2).replace('.', ',') : v)));
       const csv = '﻿' + linhas.map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -786,6 +810,17 @@
       $('gRotinaStatus').className = 'chip ' + (cfg.rotinaAtiva ? 'pill-ok' : 'pill-bad');
       $('gRotinaStatus').textContent = cfg.rotinaAtiva ? '● Ativa' : '● Desativada';
       $('btnRotina').textContent = cfg.rotinaAtiva ? '⏸️ Desativar rotina' : '⏰ Ativar rotina';
+      if (cfg.rotinaAtiva && !cfg.rotinaAusenciasAtiva) {
+        $('gRotinaStatus').className = 'chip pill-warn'; $('gRotinaStatus').textContent = '● Ativa sem ausências';
+        $('btnRotina').textContent = '⏸️ Desativar (depois ative de novo para incluir as ausências)';
+      }
+
+      $('gFontes').innerHTML = CTL.times.map(t => {
+        const ag = t.agenda ? '<span class="chip pill-ok">📅 Agenda</span>' : '<span class="chip" style="background:#f1f5f9;color:#94a3b8">📅 sem agenda</span>';
+        const pf = t.planilhaFerias ? '<span class="chip pill-ok">🏖️ Férias</span>' : '<span class="chip" style="background:#f1f5f9;color:#94a3b8">🏖️ sem planilha</span>';
+        const n = CTL.ausencias.filter(a => a.time === t.time).length;
+        return `<div class="team-item"><span>${esc(t.time)} <span class="id">· ${n} ausência(s)</span></span><span style="display:flex;gap:6px">${ag}${pf}</span></div>`;
+      }).join('');
 
       $('gTimes').innerHTML = CTL.times.length ? CTL.times.map(t => `
         <div class="team-item"><span>${esc(t.time)}</span>
@@ -827,9 +862,10 @@
         cols: [
           { key: 'time', titulo: 'Time', tipo: 'text', w: '30%' },
           { key: 'teamId', titulo: 'Team ID (Tempo)', tipo: 'text', w: '15%', ph: 'ex.: 1234' },
-          { key: 'agenda', titulo: 'Agenda de ausências (Google Agenda)', tipo: 'text', ph: 'ID da agenda do time (integração em breve)' }
+          { key: 'agenda', titulo: 'Agenda de ausências (ID Google Agenda)', tipo: 'text', ph: 'c_...@group.calendar.google.com' },
+          { key: 'planilhaFerias', titulo: 'Planilha de férias (URL)', tipo: 'text', ph: 'https://docs.google.com/spreadsheets/d/...' }
         ],
-        novo: () => ({ time: '', teamId: '', agenda: '' })
+        novo: () => ({ time: '', teamId: '', agenda: '', planilhaFerias: '' })
       },
       colaboradores: {
         titulo: 'Colaboradores', sub: 'Quem entra na capacidade de cada time (CONFIG_TIME)',
@@ -855,7 +891,8 @@
       ausencias: {
         titulo: 'Ausências', sub: 'Férias, folgas e afastamentos por colaborador',
         filtroTime: 'time',
-        banner: '🔗 <div><b>Integração com o Google Agenda por time:</b> em breve as ausências vão ser importadas da agenda informada na aba Times (coluna Agenda de ausências), com origem <i>Google Agenda</i>. Por enquanto, cadastre aqui manualmente. Deixe "Horas/dia" vazio para dia inteiro.</div>',
+        banner: '🔗 <div><b>Ausências sincronizadas automaticamente</b> da agenda e da planilha de férias de cada time (aba Times), além dos lançamentos manuais. Elas abatem as horas esperadas do dia: dia inteiro zera a meta, "Horas/dia" abate só aquelas horas. Tipo <i>Informativo</i> não abate. Ajustes de colaborador e tipo em linhas sincronizadas são mantidos na próxima sincronização.</div>',
+        acao: { id: 'btnSyncCtl', texto: '🔄 Sincronizar agora' },
         cols: [
           { key: 'time', titulo: 'Time', tipo: 'time', w: '14%' },
           { key: 'usuario', titulo: 'Colaborador', tipo: 'colab', w: '20%' },
@@ -887,6 +924,8 @@
       $('ctlTitulo').textContent = def.titulo;
       $('ctlSub').textContent = def.sub;
       $('ctlBanner').innerHTML = def.banner ? `<div class="banner">${def.banner}</div>` : '';
+      $('btnAcaoCad').style.display = def.acao ? '' : 'none';
+      if (def.acao) $('btnAcaoCad').textContent = def.acao.texto;
 
       const fSel = $('ctlFiltroTime');
       fSel.style.display = def.filtroTime ? '' : 'none';
@@ -913,7 +952,8 @@
           case 'tipoAus': return `<select class="cell-inp" ${at}>${CTL.tiposAusencia.map(t => `<option ${t === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
           case 'date': return `<input class="cell-inp" type="date" value="${esc(v)}" ${at}>`;
           case 'number': return `<input class="cell-inp" type="number" min="0" max="24" step="0.5" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
-          case 'ro': return `<span class="chip" style="background:${v === 'Google Agenda' ? '#e0f2fe' : '#f1f5f9'};color:#334155">${esc(v || 'Manual')}</span>`;
+          case 'ro': { const cores = { 'Google Agenda': ['#e0f2fe', '#0369a1'], 'Planilha de Férias': ['#ede9fe', '#6d28d9'] }; const [bgc, fgc] = cores[v] || ['#f1f5f9', '#334155'];
+            return `<span class="chip" style="background:${bgc};color:${fgc};white-space:nowrap">${esc(v || 'Manual')}</span>`; }
           default: return `<input class="cell-inp" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
         }
       };
@@ -970,6 +1010,18 @@
     document.querySelectorAll('.subtab').forEach(b => b.onclick = () => { cadAtual = b.dataset.cad; $('ctlBusca').value = ''; renderControle(); });
     document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => { cadAtual = b.dataset.goto; irPara('controle'); renderControle(); });
     $('btnGerar').onclick = gerarMes;
+    const sincronizar = recalc => {
+      if (temAlteracao('ausencias')) { toast('Salve ou descarte as alterações de Ausências antes de sincronizar.', true); return; }
+      const t = $('gTime') ? $('gTime').value : '';
+      executarServidor('sincronizarAusenciasPeloPainel', [t], 'Lendo agenda e planilha de férias…', () => {
+        delete cadastroOriginal.ausencias; delete cadastroEdit.ausencias; dashDesatualizado = true;
+        if (recalc) executarServidor('executarFuncaoPeloPainel', ['recalcularBaseEHistorico', t || '-- Todos os Times (Geral) --'], 'Recalculando com as ausências…', () => carregarControle());
+        else carregarControle();
+      });
+    };
+    $('btnSyncAus').onclick = () => sincronizar(false);
+    $('btnSyncRecalc').onclick = () => sincronizar(true);
+    $('btnAcaoCad').onclick = () => sincronizar(false);
     $('btnRecalc').onclick = () => executarServidor('executarFuncaoPeloPainel', ['recalcularBaseEHistorico', $('gTime').value || '-- Todos os Times (Geral) --'], 'Recalculando ajustes manuais…', () => { dashDesatualizado = true; carregarControle(); });
     $('btnRotina').onclick = () => executarServidor((CTL.config && CTL.config.rotinaAtiva) ? 'desativarRotinaMensal' : 'ativarRotinaMensal', [], 'Atualizando rotina…', () => carregarControle());
     $('btnSalvarApi').onclick = () => executarServidor('salvarConfiguracoesTempo', [{ jiraBaseUrl: $('gUrl').value, jiraToken: $('gToken').value }], 'Salvando conexão…', () => { $('gToken').value = ''; carregarControle(); });

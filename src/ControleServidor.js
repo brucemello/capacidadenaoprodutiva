@@ -5,7 +5,7 @@
 
 const SHEET_AUSENCIAS = 'AUSENCIAS';
 
-const TIPOS_AUSENCIA = ['Férias', 'Folga', 'Atestado', 'Licença', 'Treinamento', 'Day off', 'Outro'];
+const TIPOS_AUSENCIA = ['Férias', 'Folga', 'Consulta/Exame', 'Atestado', 'Licença', 'Treinamento', 'Banco de horas', 'Ausência', 'Informativo', 'Outro'];
 
 /** Layout fixo de cada cadastro (ordem = colunas A, B, C...). */
 const CADASTROS = {
@@ -14,7 +14,8 @@ const CADASTROS = {
     colunas: [
       { key: 'time', titulo: 'Lista de Times' },
       { key: 'teamId', titulo: 'Team ID (Tempo)' },
-      { key: 'agenda', titulo: 'Agenda de Ausências (ID Google Agenda)' }
+      { key: 'agenda', titulo: 'Agenda de Ausências (ID Google Agenda)' },
+      { key: 'planilhaFerias', titulo: 'Planilha de Férias (URL)' }
     ]
   },
   colaboradores: {
@@ -43,7 +44,7 @@ const CADASTROS = {
       { key: 'inicio', titulo: 'Data início', data: true },
       { key: 'fim', titulo: 'Data fim', data: true },
       { key: 'tipo', titulo: 'Tipo' },
-      { key: 'horas', titulo: 'Horas por dia (vazio = dia inteiro)' },
+      { key: 'horas', titulo: 'Horas por dia (vazio = dia inteiro)', num: true },
       { key: 'origem', titulo: 'Origem' },
       { key: 'idEvento', titulo: 'ID Evento Agenda' },
       { key: 'obs', titulo: 'Observação' }
@@ -72,6 +73,9 @@ function listarCadastro(tipo) {
         if (c.data) {
           const d = normalizarData_(valores[i][j] instanceof Date ? valores[i][j] : exibidos[i][j]);
           v = d ? Utilities.formatDate(d, CONFIG.TIMEZONE, 'yyyy-MM-dd') : '';
+        } else if (c.num) {
+          const raw = valores[i][j];
+          v = raw === '' || raw == null ? '' : String(Math.round(converterNumero_(raw) * 100) / 100);
         } else {
           v = String(exibidos[i][j] == null ? '' : exibidos[i][j]).trim();
         }

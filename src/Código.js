@@ -197,6 +197,7 @@ function processarTimesheetMensal(timeSelecionado, opcoes) {
 
   const configTime = carregarConfigTime_();
   const feriados = carregarFeriados_();
+  const mapaAusencias = carregarMapaAusencias_();
 
   const listaTodasDatas = [];
   let dataCorrente = new Date(dataMinima.getTime());
@@ -208,7 +209,8 @@ function processarTimesheetMensal(timeSelecionado, opcoes) {
   const saida = [[
     'Mês referência', 'Time', 'Nome completo', 'Nome de Usuário', 'Data', 'Horas importadas',
     'Ajuste manual de horas', 'Horas finais', 'Dia útil?', 'Considerar capacidade?',
-    'Horas esperadas', 'Horas não produtivas', '% não produtivo', 'Observação'
+    'Horas esperadas', 'Horas não produtivas', '% não produtivo', 'Observação',
+    'Horas ausência (abatidas)', 'Ausência (motivo)'
   ]];
 
   const usuariosMapeados = Object.keys(configTime);
@@ -249,13 +251,15 @@ function processarTimesheetMensal(timeSelecionado, opcoes) {
       const diaUtil = isDiaUtil_(diaObj, feriados);
       const diaUtilTexto = diaUtil ? 'SIM' : 'NÃO';
       
-      const horasEsperadas = (diaUtil && considerarFinal === 'SIM') ? CONFIG.HORAS_DIA : 0;
+      const aus = (diaUtil && considerarFinal === 'SIM') ? horasAbatidasNoDia_(mapaAusencias, userChave, dataChave) : { horas: 0, descricao: '' };
+      const horasEsperadas = (diaUtil && considerarFinal === 'SIM') ? Math.max(CONFIG.HORAS_DIA - aus.horas, 0) : 0;
       const horasNaoProdutivas = Math.max(horasEsperadas - horasApontadas, 0);
       const percNaoProdutivo = horasEsperadas > 0 ? horasNaoProdutivas / horasEsperadas : 0;
 
       saida.push([
         mesReferencia, conf.time, conf.nomeOriginal, userChave, diaObj, horasApontadas, 
-        '', horasApontadas, diaUtilTexto, considerarFinal, horasEsperadas, horasNaoProdutivas, percNaoProdutivo, ''
+        '', horasApontadas, diaUtilTexto, considerarFinal, horasEsperadas, horasNaoProdutivas, percNaoProdutivo, '',
+        aus.horas, aus.descricao
       ]);
     });
   });
@@ -309,6 +313,10 @@ function recalcularLinhasTimesheet_(timeSelecionado) {
   if (dados.length < 2) return;
 
   const configTime = carregarConfigTime_();
+  const mapaAusencias = carregarMapaAusencias_();
+
+  // TIMESHEET gerada antes das ausências: garante as colunas O e P
+  dados.forEach((linha, idx) => { while (linha.length < 16) linha.push(idx === 0 ? (linha.length === 14 ? 'Horas ausência (abatidas)' : 'Ausência (motivo)') : ''); });
 
   for (let i = 1; i < dados.length; i++) {
     const usuario = String(dados[i][3]).trim().toLowerCase();
@@ -325,10 +333,15 @@ function recalcularLinhasTimesheet_(timeSelecionado) {
     const considerarFinal = String(conf.considerar).trim().toUpperCase();
     const diaUtilTexto = String(dados[i][8]).trim().toUpperCase();
     
-    const horasEsperadas = (diaUtilTexto === 'SIM' && considerarFinal === 'SIM') ? CONFIG.HORAS_DIA : 0;
+    const dataObj = normalizarData_(dados[i][4]);
+    const dataIso = dataObj ? Utilities.formatDate(dataObj, CONFIG.TIMEZONE, 'yyyy-MM-dd') : '';
+    const aus = (diaUtilTexto === 'SIM' && considerarFinal === 'SIM' && dataIso) ? horasAbatidasNoDia_(mapaAusencias, usuario, dataIso) : { horas: 0, descricao: '' };
+    const horasEsperadas = (diaUtilTexto === 'SIM' && considerarFinal === 'SIM') ? Math.max(CONFIG.HORAS_DIA - aus.horas, 0) : 0;
     const horasNaoProdutivas = Math.max(horasEsperadas - horasFinais, 0);
     const percNaoProdutivo = horasEsperadas > 0 ? horasNaoProdutivas / horasEsperadas : 0;
 
+    dados[i][14] = aus.horas;
+    dados[i][15] = aus.descricao;
     dados[i][1] = conf.time;
     dados[i][7] = horasFinais;
     dados[i][9] = considerarFinal;
@@ -338,7 +351,7 @@ function recalcularLinhasTimesheet_(timeSelecionado) {
   }
   sh.getRange(1, 1, dados.length, dados[0].length).setValues(dados);
   
-  registrarLog_('Recálculo de Ajustes', 'SUCESSO', 'Ajustes manuais integrados à base analítica' + (timeSelecionado ? ` para o time ${timeSelecionado}.` : '.'));
+  registrarLog_('Recálculo de Ajustes', 'SUCESSO', 'Ajustes manuais e ausências integrados à base analítica' + (timeSelecionado ? ` para o time ${timeSelecionado}.` : '.'));
   atualizarBaseColaborador_();
 }
 
@@ -363,22 +376,23 @@ function atualizarBaseColaborador_() {
     const chave = chaveMes + '|' + time + '|' + usuario;
     
     if (!resumo[chave]) {
-      resumo[chave] = { mes, time, nome, usuario, considerar: dados[i][9], exp: 0, ap: 0 };
+      resumo[chave] = { mes, time, nome, usuario, considerar: dados[i][9], exp: 0, ap: 0, aus: 0 };
     }
     resumo[chave].exp += converterNumero_(dados[i][10]);
     resumo[chave].ap += converterNumero_(dados[i][7]);
+    resumo[chave].aus += converterNumero_(dados[i][14]);
   }
 
   const saida = [[
     'Mês referência', 'Time', 'Nome completo', 'Nome de Usuário', 'Considerar capacidade?',
-    'Horas esperadas', 'Horas apontadas', 'Horas não produtivas', '% não produtivo'
+    'Horas esperadas', 'Horas apontadas', 'Horas não produtivas', '% não produtivo', 'Horas ausência (abatidas)'
   ]];
   
   Object.values(resumo).forEach(item => {
     const np = Math.max(item.exp - item.ap, 0);
     const perc = item.exp > 0 ? np / item.exp : 0;
     
-    saida.push([item.mes, item.time, item.nome, item.usuario, item.considerar, item.exp, item.ap, np, perc]);
+    saida.push([item.mes, item.time, item.nome, item.usuario, item.considerar, item.exp, item.ap, np, perc, Math.round(item.aus * 100) / 100]);
   });
   
   shBase.clear();
@@ -387,6 +401,7 @@ function atualizarBaseColaborador_() {
   shBase.getRange(2, 1, saida.length - 1, 1).setNumberFormat('yyyy-MM');
   shBase.getRange(2, 6, saida.length - 1, 3).setNumberFormat('#,##0.00');
   shBase.getRange(2, 9, saida.length - 1, 1).setNumberFormat('0.00%');
+  shBase.getRange(2, 10, saida.length - 1, 1).setNumberFormat('#,##0.00');
   
   atualizarHistorico_(shHistorico, saida);
 }
@@ -424,8 +439,15 @@ function atualizarHistorico_(shHistorico, saidaBase) {
   for (let i = 1; i < saidaBase.length; i++) { 
     novoHistorico.push(saidaBase[i]);
   }
+  // Meses antigos (antes das ausências) têm menos colunas: completa com vazio
+  const largura = novoHistorico[0].length;
+  for (let i = 0; i < novoHistorico.length; i++) {
+    novoHistorico[i] = novoHistorico[i].slice(0, largura);
+    while (novoHistorico[i].length < largura) novoHistorico[i].push('');
+  }
   shHistorico.clear();
   shHistorico.getRange(1, 1, novoHistorico.length, novoHistorico[0].length).setValues(novoHistorico);
+  shHistorico.getRange(2, 10, Math.max(novoHistorico.length - 1, 1), 1).setNumberFormat('#,##0.00');
   
   shHistorico.getRange(2, 1, novoHistorico.length - 1, 1).setNumberFormat('yyyy-MM');
   shHistorico.getRange(2, 6, novoHistorico.length - 1, 3).setNumberFormat('#,##0.00');
@@ -455,6 +477,7 @@ function gerarAbaResumoNaoProdutivo_() {
     const exp = converterNumero_(dadosHist[i][5]);
     const ap = converterNumero_(dadosHist[i][6]);
     const np = converterNumero_(dadosHist[i][7]);
+    const aus = converterNumero_(dadosHist[i][9]);
 
     if (!mes || !time) continue;
 
@@ -462,8 +485,9 @@ function gerarAbaResumoNaoProdutivo_() {
     const chave = chaveMes + '|' + time;
 
     if (!consolidado[chave]) {
-      consolidado[chave] = { mesObj: mes, time, totalExp: 0, totalAp: 0, totalNp: 0 };
+      consolidado[chave] = { mesObj: mes, time, totalExp: 0, totalAp: 0, totalNp: 0, totalAus: 0 };
     }
+    consolidado[chave].totalAus += aus;
 
     consolidado[chave].totalExp += exp;
     consolidado[chave].totalAp += ap;
@@ -471,7 +495,7 @@ function gerarAbaResumoNaoProdutivo_() {
   }
 
   const saida = [[
-    'Mês referência', 'Time', 'Total Horas Esperadas', 'Total Horas Apontadas', 'Total Horas Não Produtivas', '% Não Produtivo do Time'
+    'Mês referência', 'Time', 'Total Horas Esperadas', 'Total Horas Apontadas', 'Total Horas Não Produtivas', '% Não Produtivo do Time', 'Total Horas Ausência (abatidas)'
   ]];
 
   Object.values(consolidado).forEach(item => {
@@ -484,7 +508,8 @@ function gerarAbaResumoNaoProdutivo_() {
       item.totalExp,
       item.totalAp,
       item.totalNp,
-      percTime
+      percTime,
+      Math.round(item.totalAus * 100) / 100
     ]);
   });
 

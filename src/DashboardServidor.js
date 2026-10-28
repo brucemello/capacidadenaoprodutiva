@@ -51,7 +51,8 @@ function obterDadosDashboard() {
   const shHist = ss.getSheetByName(CONFIG.SHEET_HISTORICO);
   if (shHist && shHist.getLastRow() > 1) {
     const n = shHist.getLastRow() - 1;
-    const valores = shHist.getRange(2, 1, n, 9).getValues();
+    const nColH = Math.min(Math.max(shHist.getLastColumn(), 9), 10);
+    const valores = shHist.getRange(2, 1, n, nColH).getValues();
     const exibidos = shHist.getRange(2, 1, n, 1).getDisplayValues();
     for (let i = 0; i < n; i++) {
       const v = valores[i];
@@ -65,7 +66,8 @@ function obterDadosDashboard() {
         considerar: String(v[4] || 'SIM').toUpperCase(),
         esperadas: converterNumero_(v[5]),
         apontadas: converterNumero_(v[6]),
-        naoProdutivas: converterNumero_(v[7])
+        naoProdutivas: converterNumero_(v[7]),
+        ausencia: converterNumero_(v[9])
       });
     }
   }
@@ -86,7 +88,8 @@ function obterDadosDashboard() {
   const shTs = ss.getSheetByName(CONFIG.SHEET_TIMESHEET);
   if (shTs && shTs.getLastRow() > 1) {
     const n = shTs.getLastRow() - 1;
-    const valores = shTs.getRange(2, 1, n, 12).getValues();
+    const nColT = Math.min(Math.max(shTs.getLastColumn(), 12), 16);
+    const valores = shTs.getRange(2, 1, n, nColT).getValues();
     const exibidos = shTs.getRange(2, 1, n, 5).getDisplayValues();
     for (let i = 0; i < n; i++) {
       const v = valores[i];
@@ -99,7 +102,9 @@ function obterDadosDashboard() {
         usuario: String(v[3]).toLowerCase(),
         horas: converterNumero_(v[7]),
         diaUtil: String(v[8]).toUpperCase() === 'SIM',
-        esperadas: converterNumero_(v[10])
+        esperadas: converterNumero_(v[10]),
+        ausencia: converterNumero_(v[14]),
+        motivo: String(v[15] || '')
       });
     }
   }
