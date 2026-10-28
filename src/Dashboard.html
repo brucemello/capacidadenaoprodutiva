@@ -144,8 +144,67 @@
     footer { text-align: center; font-size: 11.5px; color: var(--ink-3); padding: 6px 0 22px; }
     footer a { color: var(--teal); font-weight: 600; text-decoration: none; }
 
+    /* ---------- Navegação ---------- */
+    .tabs { display: flex; gap: 6px; margin-top: 18px; flex-wrap: wrap; }
+    .tab { background: transparent; color: rgba(255,255,255,.75); border: 1px solid transparent; padding: 9px 16px; border-radius: 999px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; transition: background .2s, color .2s; }
+    .tab:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .tab.active { background: #fff; color: var(--navy); box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+    .view[hidden] { display: none !important; }
+
+    /* ---------- Geração ---------- */
+    .gen-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+    .gen-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .fld { display: flex; flex-direction: column; gap: 5px; }
+    .fld label { font-size: 11px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
+    .inp { padding: 10px 12px; border-radius: 10px; border: 1px solid #d6deea; font: inherit; font-size: 13px; background: #fff; color: var(--ink); width: 100%; }
+    .inp:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,91,120,.12); }
+    .btn-primary { background: linear-gradient(120deg, #0f5b78, #0b1f3a); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.12); }
+    .btn-line { background: #fff; color: var(--ink-2); border: 1px solid #d6deea; }
+    .btn-line:hover { background: #f5f8fc; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .hint { font-size: 12px; color: var(--ink-3); line-height: 1.5; margin: 0 0 14px; }
+    .switch-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; background: #f7f9fd; border-radius: 12px; margin-bottom: 12px; }
+    .switch-line b { font-size: 13px; }
+    .team-list { display: flex; flex-direction: column; gap: 8px; }
+    .team-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font-size: 13px; font-weight: 600; }
+    .team-item span.id { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--ink-3); font-weight: 600; }
+    .log { display: flex; flex-direction: column; gap: 2px; max-height: 470px; overflow-y: auto; }
+    .log-item { display: grid; grid-template-columns: 10px 1fr; gap: 12px; padding: 10px 6px; border-bottom: 1px solid #f1f4f9; }
+    .log-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; }
+    .log-title { font-size: 13px; font-weight: 700; }
+    .log-meta { font-size: 11px; color: var(--ink-3); margin-left: 6px; font-weight: 500; }
+    .log-det { font-size: 12px; color: var(--ink-2); margin-top: 2px; line-height: 1.45; word-break: break-word; }
+
+    /* ---------- Controle ---------- */
+    .subtabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .subtab { background: #fff; border: 1px solid var(--line); padding: 10px 16px; border-radius: 12px; font: inherit; font-weight: 700; font-size: 13px; color: var(--ink-2); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; box-shadow: var(--shadow); }
+    .subtab .count { background: #eef2f8; color: var(--ink-2); border-radius: 999px; padding: 1px 8px; font-size: 11px; }
+    .subtab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+    .subtab.active .count { background: rgba(255,255,255,.18); color: #fff; }
+    .subtab .dirty { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); display: none; }
+    .subtab.is-dirty .dirty { display: inline-block; }
+    .banner { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: #eef6ff; border: 1px solid #d5e6ff; color: #1e3a8a; font-size: 12.5px; margin-bottom: 14px; line-height: 1.5; }
+    table.edit { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.edit th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 700; padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    table.edit td { padding: 4px; border-bottom: 1px solid #f3f5fa; vertical-align: middle; }
+    table.edit tr.changed td { background: #fffbeb; }
+    table.edit tr.novo td { background: #f0fdf4; }
+    table.edit .cell-inp { width: 100%; padding: 7px 8px; border: 1px solid transparent; border-radius: 8px; font: inherit; font-size: 12.5px; background: transparent; color: var(--ink); min-width: 70px; }
+    table.edit .cell-inp:hover { border-color: #e2e8f0; background: #fff; }
+    table.edit .cell-inp:focus { outline: none; border-color: var(--teal); background: #fff; box-shadow: 0 0 0 3px rgba(15,91,120,.1); }
+    table.edit select.cell-inp { cursor: pointer; }
+    .sel-sim { color: #047857 !important; font-weight: 700; } .sel-nao { color: #b91c1c !important; font-weight: 700; }
+    .icon-btn { border: 0; background: transparent; cursor: pointer; font-size: 15px; padding: 6px 8px; border-radius: 8px; color: var(--ink-3); }
+    .icon-btn:hover { background: #fee2e2; color: #b91c1c; }
+    .ctl-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .ctl-status { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+    .ctl-status.dirty { color: #b45309; }
+
     @media (max-width: 1250px) { .kpis { grid-template-columns: repeat(4, 1fr); } .kpi-hero { grid-column: span 2; } }
-    @media (max-width: 900px) { .row-2, .row-3 { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) { .row-2, .row-3, .gen-grid, .form-row { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 560px) { .hero, main { padding-left: 16px; padding-right: 16px; } .field select { min-width: 140px; } }
   </style>
 </head>
@@ -163,16 +222,24 @@
           <div class="sub" id="subtitulo">—</div>
         </div>
       </div>
-      <div class="filters">
+      <div class="filters" id="filtrosDash">
         <div class="field"><label for="fTime">Time</label><select id="fTime"></select></div>
         <div class="field"><label for="fMes">Mês de referência</label><select id="fMes"></select></div>
         <button class="btn btn-ghost" id="btnReprocessar" title="Busca o mês no Tempo e recalcula">⟳ Reprocessar mês</button>
         <button class="btn btn-light" id="btnRecarregar">↻ Atualizar</button>
       </div>
     </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="dash">📈 Dashboard</button>
+      <button class="tab" data-view="geracao">⚙️ Geração</button>
+      <button class="tab" data-view="controle">🗂️ Controle</button>
+    </nav>
   </header>
 
-  <main id="conteudo">
+  <main>
+  <div class="view" id="viewDash">
+  <div id="dashVazio" class="card empty" style="margin-top:0" hidden><b>Nenhuma apuração encontrada</b>Vá na aba Geração e busque o mês no Tempo.</div>
+  <div id="conteudo">
     <!-- KPIs -->
     <section class="grid kpis" id="kpis"></section>
 
@@ -227,6 +294,89 @@
       </div>
       <div class="tbl-wrap"><table class="data" id="tabela"></table></div>
     </section>
+  </div>
+  </div>
+
+  <!-- ===================== GERAÇÃO ===================== -->
+  <div class="view" id="viewGeracao" hidden>
+    <div class="gen-grid">
+      <div class="gen-col">
+        <section class="card">
+          <div class="card-head"><div><h2>Gerar apuração do mês</h2><div class="card-sub">Busca os apontamentos no Tempo e recalcula TIMESHEET, base, histórico e resumo</div></div></div>
+          <div class="form-row">
+            <div class="fld"><label for="gTime">Time</label><select class="inp" id="gTime"></select></div>
+            <div class="fld"><label for="gMes">Mês de referência</label><input class="inp" type="month" id="gMes"></div>
+          </div>
+          <p class="hint">O padrão é o último mês fechado. Gerar de novo um mês substitui só aquele mês e time no histórico; ajustes manuais da TIMESHEET são descartados.</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnGerar">🚀 Buscar no Tempo e processar</button>
+            <button class="btn btn-line" id="btnRecalc">🔄 Recalcular ajustes manuais</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><h2>Rotina automática</h2><div class="card-sub">Executa sozinha todo mês, sem ninguém abrir a planilha</div></div></div>
+          <div class="switch-line">
+            <div><b>Todo dia 3, às 7h</b><div class="card-sub">Busca o mês fechado anterior de todos os times com Team ID</div></div>
+            <span class="chip" id="gRotinaStatus">…</span>
+          </div>
+          <button class="btn btn-line" id="btnRotina">…</button>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><h2>Conexão com o Tempo</h2><div class="card-sub">URL do Jira e token pessoal (PAT)</div></div></div>
+          <div class="form-row">
+            <div class="fld"><label for="gUrl">URL do Jira</label><input class="inp" id="gUrl" placeholder="https://jiraproducao.totvs.com.br"></div>
+            <div class="fld"><label for="gToken">Token (PAT)</label><input class="inp" type="password" id="gToken" placeholder="Deixe em branco para manter"></div>
+          </div>
+          <p class="hint" id="gTokenHint"></p>
+          <button class="btn btn-line" id="btnSalvarApi">💾 Salvar conexão</button>
+        </section>
+      </div>
+
+      <div class="gen-col">
+        <section class="card">
+          <div class="card-head"><div><h2>Times e Team ID</h2><div class="card-sub">Times sem Team ID ficam de fora da busca</div></div>
+            <button class="btn btn-soft" data-goto="times">Editar</button></div>
+          <div class="team-list" id="gTimes"></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><div><h2>Histórico de execuções</h2><div class="card-sub">Últimos registros de LOGS_PROCESSAMENTO</div></div>
+            <button class="btn btn-soft" id="btnLogs">↻</button></div>
+          <div class="log" id="gLogs"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CONTROLE ===================== -->
+  <div class="view" id="viewControle" hidden>
+    <div class="subtabs" id="subtabs">
+      <button class="subtab active" data-cad="times">👥 Times <span class="count" id="cnt-times">0</span><i class="dirty"></i></button>
+      <button class="subtab" data-cad="colaboradores">🧑‍💻 Colaboradores <span class="count" id="cnt-colaboradores">0</span><i class="dirty"></i></button>
+      <button class="subtab" data-cad="feriados">📅 Feriados <span class="count" id="cnt-feriados">0</span><i class="dirty"></i></button>
+      <button class="subtab" data-cad="ausencias">🌴 Ausências <span class="count" id="cnt-ausencias">0</span><i class="dirty"></i></button>
+    </div>
+    <section class="card">
+      <div class="card-head">
+        <div><h2 id="ctlTitulo">—</h2><div class="card-sub" id="ctlSub">—</div></div>
+        <div class="table-tools">
+          <select class="inp" id="ctlFiltroTime" style="width:auto;padding:8px 10px"></select>
+          <input class="search" id="ctlBusca" placeholder="Buscar…">
+          <button class="btn btn-soft" id="btnAddLinha">＋ Nova linha</button>
+        </div>
+      </div>
+      <div id="ctlBanner"></div>
+      <div class="tbl-wrap"><table class="edit" id="ctlTabela"></table></div>
+      <div class="ctl-foot">
+        <span class="ctl-status" id="ctlStatus">Sem alterações</span>
+        <div class="btn-row">
+          <button class="btn btn-line" id="btnDescartar">Descartar</button>
+          <button class="btn btn-primary" id="btnSalvarCad">💾 Salvar alterações</button>
+        </div>
+      </div>
+    </section>
+  </div>
   </main>
 
   <footer id="rodape">—</footer>
@@ -319,6 +469,7 @@
     function render() {
       const mes = $('fMes').value;
       if (!mes) { renderVazio(); return; }
+      $('dashVazio').hidden = true; $('conteudo').hidden = false;
       const linhas = filtrar(mes);
       const atual = totais(linhas);
       const anterior = totais(filtrar(mesAnterior(mes)));
@@ -340,7 +491,7 @@
     }
 
     function renderVazio() {
-      $('conteudo').innerHTML = `<div class="card empty" style="margin-top:0"><b>Nenhuma apuração encontrada</b>Use “Reprocessar mês” ou o painel da planilha para buscar o timesheet do Tempo.</div>`;
+      $('dashVazio').hidden = false; $('conteudo').hidden = true;
       $('subtitulo').textContent = 'Sem dados processados';
     }
 
@@ -576,13 +727,266 @@
         .withSuccessHandler(res => {
           btn.disabled = false;
           if (!res.sucesso) { loading(false); toast(res.mensagem, true); return; }
-          toast('Mês reprocessado com sucesso!'); carregar();
+          toast('Mês reprocessado com sucesso!'); CTL = null; carregar();
         })
         .withFailureHandler(e => { btn.disabled = false; loading(false); toast('Falha: ' + (e.message || e), true); })
         .buscarTimesheetTempoPeloPainel(t, mes || null);
     }
 
+    /* ======================= Navegação ======================= */
+    let viewAtual = 'dash';
+    let dashDesatualizado = false;
+    let CTL = null;                  // dados de controle (times, colaboradores, ...)
+    const cadastroOriginal = {};     // cópia salva para detectar alterações
+    const cadastroEdit = {};         // linhas em edição
+    let cadAtual = 'times';
+
+    function irPara(view) {
+      if (view === viewAtual) return;
+      viewAtual = view;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+      $('viewDash').hidden = view !== 'dash';
+      $('viewGeracao').hidden = view !== 'geracao';
+      $('viewControle').hidden = view !== 'controle';
+      $('filtrosDash').style.visibility = view === 'dash' ? 'visible' : 'hidden';
+      if (view === 'dash') { if (dashDesatualizado) { dashDesatualizado = false; carregar(); } else { $('subtitulo').dataset.v && ($('subtitulo').textContent = $('subtitulo').dataset.v); } }
+      else {
+        $('subtitulo').dataset.v = $('subtitulo').textContent;
+        $('subtitulo').textContent = view === 'geracao' ? 'Geração da apuração mensal, rotina automática e conexão com o Tempo' : 'Cadastros de times, colaboradores, feriados e ausências';
+        if (!CTL) carregarControle(); else (view === 'geracao' ? renderGeracao() : renderControle());
+      }
+    }
+
+    function carregarControle(cb) {
+      loading(true, 'Carregando cadastros…');
+      google.script.run
+        .withSuccessHandler(d => {
+          CTL = d;
+          ['times', 'colaboradores', 'feriados', 'ausencias'].forEach(k => {
+            if (!temAlteracao(k)) { cadastroOriginal[k] = JSON.stringify(d[k]); cadastroEdit[k] = d[k].map(r => ({ ...r })); }
+          });
+          loading(false);
+          viewAtual === 'geracao' ? renderGeracao() : renderControle();
+          if (cb) cb();
+        })
+        .withFailureHandler(e => { loading(false); toast('Erro ao carregar cadastros: ' + (e.message || e), true); })
+        .obterDadosControle();
+    }
+
+    /* ======================= Geração ======================= */
+    function renderGeracao() {
+      const cfg = CTL.config || {};
+      const times = CTL.times.map(t => t.time).filter(Boolean);
+      const gT = $('gTime').value;
+      $('gTime').innerHTML = `<option value="">Todos os times com Team ID</option>` + times.map(t => `<option>${esc(t)}</option>`).join('');
+      if (times.includes(gT)) $('gTime').value = gT;
+      if (!$('gMes').value) $('gMes').value = cfg.mesFechadoPadrao || '';
+      $('gUrl').value = $('gUrl').value || cfg.jiraBaseUrl || '';
+      $('gTokenHint').textContent = cfg.tokenConfigurado ? '✓ Token configurado. Preencha só se quiser trocar.' : '⚠️ Token ainda não configurado: a busca no Tempo não vai funcionar.';
+      $('gRotinaStatus').className = 'chip ' + (cfg.rotinaAtiva ? 'pill-ok' : 'pill-bad');
+      $('gRotinaStatus').textContent = cfg.rotinaAtiva ? '● Ativa' : '● Desativada';
+      $('btnRotina').textContent = cfg.rotinaAtiva ? '⏸️ Desativar rotina' : '⏰ Ativar rotina';
+
+      $('gTimes').innerHTML = CTL.times.length ? CTL.times.map(t => `
+        <div class="team-item"><span>${esc(t.time)}</span>
+          ${t.teamId ? `<span class="id">ID ${esc(t.teamId)}</span>` : `<span class="chip pill-warn">sem Team ID</span>`}</div>`).join('')
+        : '<div class="empty" style="padding:20px">Nenhum time cadastrado.</div>';
+
+      const cor = st => /ERRO/i.test(st) ? '#ef4444' : '#10b981';
+      $('gLogs').innerHTML = CTL.logs.length ? CTL.logs.map(l => `
+        <div class="log-item"><span class="log-dot" style="background:${cor(l.status)}"></span>
+          <div><div class="log-title">${esc(l.acao)}<span class="log-meta">${esc(l.dataHora)} · ${esc(l.operador || 'Automático')}</span></div>
+          <div class="log-det">${esc(l.detalhe)}</div></div></div>`).join('')
+        : '<div class="empty" style="padding:20px">Sem registros.</div>';
+    }
+
+    function executarServidor(fn, args, msgLoading, ok) {
+      loading(true, msgLoading);
+      const r = google.script.run
+        .withSuccessHandler(res => {
+          loading(false);
+          if (res && res.sucesso === false) { toast(res.mensagem, true); return; }
+          if (res && res.mensagem) toast(res.mensagem);
+          if (ok) ok(res);
+        })
+        .withFailureHandler(e => { loading(false); toast('Falha: ' + (e.message || e), true); });
+      r[fn].apply(r, args);
+    }
+
+    function gerarMes() {
+      const mes = $('gMes').value;
+      if (!mes) { toast('Escolha o mês de referência.', true); return; }
+      executarServidor('buscarTimesheetTempoPeloPainel', [$('gTime').value, mes], `Buscando ${nomeMesLongo(mes)} no Tempo e processando…`,
+        () => { dashDesatualizado = true; carregarControle(); });
+    }
+
+    /* ======================= Controle ======================= */
+    const CADS = {
+      times: {
+        titulo: 'Times', sub: 'Times da capacidade e o Team ID usado na busca do Tempo',
+        cols: [
+          { key: 'time', titulo: 'Time', tipo: 'text', w: '30%' },
+          { key: 'teamId', titulo: 'Team ID (Tempo)', tipo: 'text', w: '15%', ph: 'ex.: 1234' },
+          { key: 'agenda', titulo: 'Agenda de ausências (Google Agenda)', tipo: 'text', ph: 'ID da agenda do time (integração em breve)' }
+        ],
+        novo: () => ({ time: '', teamId: '', agenda: '' })
+      },
+      colaboradores: {
+        titulo: 'Colaboradores', sub: 'Quem entra na capacidade de cada time (CONFIG_TIME)',
+        filtroTime: 'time',
+        cols: [
+          { key: 'nome', titulo: 'Nome completo', tipo: 'text', w: '24%' },
+          { key: 'usuario', titulo: 'Usuário Jira', tipo: 'text', w: '15%' },
+          { key: 'considerar', titulo: 'Capacidade', tipo: 'simnao', w: '10%' },
+          { key: 'time', titulo: 'Time', tipo: 'time', w: '18%' },
+          { key: 'obs', titulo: 'Observação', tipo: 'text' }
+        ],
+        novo: () => ({ nome: '', usuario: '', considerar: 'SIM', time: $('ctlFiltroTime').value || '', obs: '' })
+      },
+      feriados: {
+        titulo: 'Feriados', sub: 'Dias sem horas esperadas para todos os times',
+        cols: [
+          { key: 'data', titulo: 'Data', tipo: 'date', w: '180px' },
+          { key: 'descricao', titulo: 'Descrição', tipo: 'text' }
+        ],
+        novo: () => ({ data: '', descricao: '' }),
+        ordenar: (a, b) => (a.data || '9').localeCompare(b.data || '9')
+      },
+      ausencias: {
+        titulo: 'Ausências', sub: 'Férias, folgas e afastamentos por colaborador',
+        filtroTime: 'time',
+        banner: '🔗 <div><b>Integração com o Google Agenda por time:</b> em breve as ausências vão ser importadas da agenda informada na aba Times (coluna Agenda de ausências), com origem <i>Google Agenda</i>. Por enquanto, cadastre aqui manualmente. Deixe "Horas/dia" vazio para dia inteiro.</div>',
+        cols: [
+          { key: 'time', titulo: 'Time', tipo: 'time', w: '14%' },
+          { key: 'usuario', titulo: 'Colaborador', tipo: 'colab', w: '20%' },
+          { key: 'inicio', titulo: 'Início', tipo: 'date', w: '140px' },
+          { key: 'fim', titulo: 'Fim', tipo: 'date', w: '140px' },
+          { key: 'tipo', titulo: 'Tipo', tipo: 'tipoAus', w: '11%' },
+          { key: 'horas', titulo: 'Horas/dia', tipo: 'number', w: '96px', ph: 'integral' },
+          { key: 'origem', titulo: 'Origem', tipo: 'ro', w: '90px' },
+          { key: 'obs', titulo: 'Observação', tipo: 'text' }
+        ],
+        novo: () => ({ time: $('ctlFiltroTime').value || '', usuario: '', nome: '', inicio: '', fim: '', tipo: 'Férias', horas: '', origem: 'Manual', idEvento: '', obs: '' }),
+        ordenar: (a, b) => (b.inicio || '9').localeCompare(a.inicio || '9')
+      }
+    };
+
+    const temAlteracao = k => cadastroEdit[k] && JSON.stringify(cadastroEdit[k].map(limparLinha)) !== JSON.stringify(JSON.parse(cadastroOriginal[k] || '[]').map(limparLinha));
+    const limparLinha = r => { const o = { ...r }; delete o._novo; delete o._id; return o; };
+
+    function nomesTimes() { return (cadastroEdit.times || CTL.times).map(t => t.time).filter(Boolean); }
+    function colabsDoTime(time) { return (cadastroEdit.colaboradores || CTL.colaboradores).filter(c => !time || c.time === time); }
+
+    function renderControle() {
+      const def = CADS[cadAtual];
+      document.querySelectorAll('.subtab').forEach(b => {
+        b.classList.toggle('active', b.dataset.cad === cadAtual);
+        b.classList.toggle('is-dirty', temAlteracao(b.dataset.cad));
+        $('cnt-' + b.dataset.cad).textContent = (cadastroEdit[b.dataset.cad] || []).length;
+      });
+      $('ctlTitulo').textContent = def.titulo;
+      $('ctlSub').textContent = def.sub;
+      $('ctlBanner').innerHTML = def.banner ? `<div class="banner">${def.banner}</div>` : '';
+
+      const fSel = $('ctlFiltroTime');
+      fSel.style.display = def.filtroTime ? '' : 'none';
+      const fv = fSel.value;
+      fSel.innerHTML = `<option value="">Todos os times</option>` + nomesTimes().map(t => `<option>${esc(t)}</option>`).join('');
+      if (nomesTimes().includes(fv)) fSel.value = fv;
+
+      const termo = $('ctlBusca').value.trim().toLowerCase();
+      const linhas = cadastroEdit[cadAtual] || [];
+      const orig = JSON.parse(cadastroOriginal[cadAtual] || '[]');
+      const visiveis = linhas.map((r, i) => ({ r, i }))
+        .filter(({ r }) => !def.filtroTime || !fSel.value || r[def.filtroTime] === fSel.value || r._novo)
+        .filter(({ r }) => !termo || Object.values(r).some(v => String(v).toLowerCase().includes(termo)));
+      if (def.ordenar) visiveis.sort((a, b) => (b.r._novo ? 1 : 0) - (a.r._novo ? 1 : 0) || def.ordenar(a.r, b.r));
+
+      const cell = (c, r, i) => {
+        const v = r[c.key] == null ? '' : r[c.key];
+        const at = `data-i="${i}" data-k="${c.key}"`;
+        switch (c.tipo) {
+          case 'simnao': return `<select class="cell-inp ${v === 'NÃO' ? 'sel-nao' : 'sel-sim'}" ${at}><option ${v !== 'NÃO' ? 'selected' : ''}>SIM</option><option ${v === 'NÃO' ? 'selected' : ''}>NÃO</option></select>`;
+          case 'time': { const ts = nomesTimes(); return `<select class="cell-inp" ${at}><option value=""></option>${ts.concat(v && !ts.includes(v) ? [v] : []).map(t => `<option ${t === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`; }
+          case 'colab': { const cs = colabsDoTime(r.time); const tem = cs.some(c2 => c2.usuario === v);
+            return `<select class="cell-inp" ${at}><option value="">Escolha…</option>${(tem || !v ? cs : cs.concat([{ usuario: v, nome: r.nome || v }])).map(c2 => `<option value="${esc(c2.usuario)}" ${c2.usuario === v ? 'selected' : ''}>${esc(c2.nome || c2.usuario)}</option>`).join('')}</select>`; }
+          case 'tipoAus': return `<select class="cell-inp" ${at}>${CTL.tiposAusencia.map(t => `<option ${t === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
+          case 'date': return `<input class="cell-inp" type="date" value="${esc(v)}" ${at}>`;
+          case 'number': return `<input class="cell-inp" type="number" min="0" max="24" step="0.5" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
+          case 'ro': return `<span class="chip" style="background:${v === 'Google Agenda' ? '#e0f2fe' : '#f1f5f9'};color:#334155">${esc(v || 'Manual')}</span>`;
+          default: return `<input class="cell-inp" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
+        }
+      };
+      const origPorChave = {};
+      orig.forEach(o => origPorChave[JSON.stringify(o)] = true);
+
+      $('ctlTabela').innerHTML = `<thead><tr>${def.cols.map(c => `<th style="${c.w ? 'width:' + c.w : ''}">${c.titulo}</th>`).join('')}<th style="width:40px"></th></tr></thead>
+        <tbody>${visiveis.map(({ r, i }) => `<tr class="${r._novo ? 'novo' : (origPorChave[JSON.stringify(limparLinha(r))] ? '' : 'changed')}">
+          ${def.cols.map(c => `<td>${cell(c, r, i)}</td>`).join('')}
+          <td><button class="icon-btn" title="Excluir linha" data-del="${i}">🗑</button></td></tr>`).join('')
+          || `<tr><td colspan="${def.cols.length + 1}"><div class="empty" style="padding:28px">Nenhum registro${termo || fSel.value ? ' para o filtro' : ''}.</div></td></tr>`}</tbody>`;
+
+      const sujo = temAlteracao(cadAtual);
+      $('ctlStatus').textContent = sujo ? '● Alterações não salvas' : `Sem alterações · ${linhas.length} registro(s)`;
+      $('ctlStatus').className = 'ctl-status' + (sujo ? ' dirty' : '');
+      $('btnSalvarCad').disabled = !sujo; $('btnDescartar').disabled = !sujo;
+    }
+
+    function aoEditar(e) {
+      const el = e.target; if (!el.dataset || el.dataset.i == null) return;
+      const r = cadastroEdit[cadAtual][+el.dataset.i];
+      r[el.dataset.k] = el.value;
+      if (cadAtual === 'ausencias') {
+        if (el.dataset.k === 'time') { r.usuario = ''; r.nome = ''; }
+        if (el.dataset.k === 'usuario') { const c = colabsDoTime('').find(x => x.usuario === el.value); r.nome = c ? c.nome : ''; if (c && !r.time) r.time = c.time; }
+        if (el.dataset.k === 'inicio' && (!r.fim || r.fim < r.inicio)) r.fim = r.inicio;
+      }
+      const precisaRender = e.type === 'change' && ['time', 'usuario', 'inicio', 'considerar'].includes(el.dataset.k);
+      if (precisaRender) renderControle();
+      else {
+        el.closest('tr').className = r._novo ? 'novo' : 'changed';
+        const sujo = temAlteracao(cadAtual);
+        $('ctlStatus').textContent = sujo ? '● Alterações não salvas' : 'Sem alterações';
+        $('ctlStatus').className = 'ctl-status' + (sujo ? ' dirty' : '');
+        $('btnSalvarCad').disabled = !sujo; $('btnDescartar').disabled = !sujo;
+        document.querySelector(`.subtab[data-cad="${cadAtual}"]`).classList.toggle('is-dirty', sujo);
+      }
+    }
+
+    function salvarCadastroAtual() {
+      const k = cadAtual;
+      const linhas = cadastroEdit[k].map(limparLinha);
+      executarServidor('salvarCadastro', [k, linhas], 'Salvando…', res => {
+        cadastroOriginal[k] = JSON.stringify(res.linhas);
+        cadastroEdit[k] = res.linhas.map(r => ({ ...r }));
+        CTL[k] = res.linhas;
+        dashDesatualizado = true;
+        renderControle();
+      });
+    }
+
     /* ======================= Eventos ======================= */
+    document.querySelectorAll('.tab').forEach(t => t.onclick = () => irPara(t.dataset.view));
+    document.querySelectorAll('.subtab').forEach(b => b.onclick = () => { cadAtual = b.dataset.cad; $('ctlBusca').value = ''; renderControle(); });
+    document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => { cadAtual = b.dataset.goto; irPara('controle'); renderControle(); });
+    $('btnGerar').onclick = gerarMes;
+    $('btnRecalc').onclick = () => executarServidor('executarFuncaoPeloPainel', ['recalcularBaseEHistorico', $('gTime').value || '-- Todos os Times (Geral) --'], 'Recalculando ajustes manuais…', () => { dashDesatualizado = true; carregarControle(); });
+    $('btnRotina').onclick = () => executarServidor((CTL.config && CTL.config.rotinaAtiva) ? 'desativarRotinaMensal' : 'ativarRotinaMensal', [], 'Atualizando rotina…', () => carregarControle());
+    $('btnSalvarApi').onclick = () => executarServidor('salvarConfiguracoesTempo', [{ jiraBaseUrl: $('gUrl').value, jiraToken: $('gToken').value }], 'Salvando conexão…', () => { $('gToken').value = ''; carregarControle(); });
+    $('btnLogs').onclick = () => carregarControle();
+    $('ctlTabela').addEventListener('input', aoEditar);
+    $('ctlTabela').addEventListener('change', aoEditar);
+    $('ctlTabela').addEventListener('click', e => {
+      const b = e.target.closest('[data-del]'); if (!b) return;
+      cadastroEdit[cadAtual].splice(+b.dataset.del, 1); renderControle();
+    });
+    $('btnAddLinha').onclick = () => { cadastroEdit[cadAtual].unshift({ ...CADS[cadAtual].novo(), _novo: true }); renderControle(); const f = $('ctlTabela').querySelector('tbody .cell-inp'); if (f) f.focus(); };
+    $('btnDescartar').onclick = () => { cadastroEdit[cadAtual] = JSON.parse(cadastroOriginal[cadAtual]); renderControle(); };
+    $('btnSalvarCad').onclick = salvarCadastroAtual;
+    $('ctlBusca').oninput = renderControle;
+    $('ctlFiltroTime').onchange = renderControle;
+    window.addEventListener('beforeunload', e => { if (Object.keys(cadastroEdit).some(temAlteracao)) { e.preventDefault(); e.returnValue = ''; } });
+
     $('fTime').onchange = render;
     $('fMes').onchange = render;
     $('btnRecarregar').onclick = carregar;

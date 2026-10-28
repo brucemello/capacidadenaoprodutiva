@@ -49,7 +49,7 @@ function abrirPainelLateral() {
 
 function obterListaDeTimes() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = obterPlanilha_();
     const sh = ss.getSheetByName('TIME');
     if (!sh) return [];
     const dados = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
@@ -81,7 +81,7 @@ function executarFuncaoPeloPainel(nomeFuncao, timeSelecionado) {
 }
 
 function inicializarOuAtualizarEstrutura() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const shConfig = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
   if (shConfig.getLastRow() < 1) {
     shConfig.appendRow(['Nome completo', 'Nome de Usuário', 'Considerar capacidade?', 'Time', 'Observação']);
@@ -107,7 +107,7 @@ function importarDadosJira(fileObject) {
     const tempSpreadsheet = SpreadsheetApp.openById(tempFile.id);
     let tempSheet = tempSpreadsheet.getSheets()[0];
     const novosDados = tempSheet.getDataRange().getValues();
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = obterPlanilha_();
     const shImportar = getOrCreateSheet_(ss, CONFIG.SHEET_IMPORTAR);
     shImportar.clear();
     if (novosDados.length > 0 && novosDados[0].length > 0) {
@@ -131,7 +131,7 @@ function importarDadosJira(fileObject) {
  */
 function processarTimesheetMensal(timeSelecionado, opcoes) {
   opcoes = opcoes || {};
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const shImportar = getOrCreateSheet_(ss, CONFIG.SHEET_IMPORTAR);
   const shTimesheet = getOrCreateSheet_(ss, CONFIG.SHEET_TIMESHEET);
 
@@ -277,7 +277,7 @@ function processarTimesheetMensal(timeSelecionado, opcoes) {
 }
 
 function atualizarTimeNaAbaConfig_(usuariosSet, mapaNomes, timeSelecionado, mapaTimePorUsuario) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const shConfig = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
   const dadosConfig = shConfig.getDataRange().getValues();
   
@@ -303,7 +303,7 @@ function atualizarTimeNaAbaConfig_(usuariosSet, mapaNomes, timeSelecionado, mapa
 }
 
 function recalcularLinhasTimesheet_(timeSelecionado) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const sh = getOrCreateSheet_(ss, CONFIG.SHEET_TIMESHEET);
   const dados = sh.getDataRange().getValues();
   if (dados.length < 2) return;
@@ -343,7 +343,7 @@ function recalcularLinhasTimesheet_(timeSelecionado) {
 }
 
 function atualizarBaseColaborador_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const shTimesheet = getOrCreateSheet_(ss, CONFIG.SHEET_TIMESHEET);
   const shBase = getOrCreateSheet_(ss, CONFIG.SHEET_BASE);
   const shHistorico = getOrCreateSheet_(ss, CONFIG.SHEET_HISTORICO);
@@ -440,7 +440,7 @@ function atualizarHistorico_(shHistorico, saidaBase) {
  * Gera a aba RESUMO_NAO_PRODUTIVO com o % não produtivo exato do time por Mês/Time
  */
 function gerarAbaResumoNaoProdutivo_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const shHistorico = getOrCreateSheet_(ss, CONFIG.SHEET_HISTORICO);
   const shResumo = getOrCreateSheet_(ss, CONFIG.SHEET_RESUMO_TIME);
 
@@ -524,7 +524,7 @@ function extrairAnoMesSemTimezone_(valor) {
 }
 
 function carregarConfigTime_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const sh = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
   const dados = sh.getDataRange().getValues();
   const config = {};
@@ -541,7 +541,7 @@ function carregarConfigTime_() {
 }
 
 function carregarFeriados_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const sh = getOrCreateSheet_(ss, CONFIG.SHEET_FERIADOS);
   const dados = sh.getDataRange().getDisplayValues();
   const feriados = {};
@@ -596,7 +596,7 @@ function getOrCreateSheet_(ss, nome) {
 
 function registrarLog_(acao, status, detalhe) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = obterPlanilha_();
     const sh = getOrCreateSheet_(ss, CONFIG.SHEET_LOGS);
     if (sh.getLastRow() < 1) {
       sh.appendRow(['Data/Hora', 'Operador', 'Ação', 'Status', 'Detalhes Matemáticos']);

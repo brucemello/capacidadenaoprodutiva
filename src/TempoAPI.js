@@ -70,7 +70,7 @@ function lerConfigTempo_() {
  * ABA TIME: nome do time + Team ID do Tempo
  * ===========================================================================*/
 function garantirColunaTeamId_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const sh = getOrCreateSheet_(ss, TEMPO.SHEET_TIMES);
   if (sh.getLastRow() < 1) {
     sh.getRange(1, 1, 1, 2).setValues([['Time', TEMPO.HEADER_TEAM_ID]]);
@@ -89,7 +89,7 @@ function garantirColunaTeamId_() {
 }
 
 function obterTimesComTeamId_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const sh = ss.getSheetByName(TEMPO.SHEET_TIMES);
   if (!sh || sh.getLastRow() < 2) return [];
   const colId = garantirColunaTeamId_();
@@ -222,7 +222,7 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   });
 
   // Grava a base bruta (substitui o antigo CSV)
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const shImportar = getOrCreateSheet_(ss, CONFIG.SHEET_IMPORTAR);
   shImportar.clear();
   shImportar.clearFormats();
@@ -361,7 +361,7 @@ function identificarAutor_(wl) {
  * CONFIG_TIME: garante membros do time cadastrados
  * ===========================================================================*/
 function registrarMembrosNaConfig_(membrosPorTime, usuariosComApontamento) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha_();
   const sh = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
   const dados = sh.getDataRange().getValues();
   const existentes = {};
