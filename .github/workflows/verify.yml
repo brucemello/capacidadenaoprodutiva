@@ -22,9 +22,9 @@ jobs:
           mkdir -p /tmp/remoto
           jq '.rootDir="/tmp/remoto"' .clasp.json > /tmp/c.json && mv /tmp/c.json .clasp.json
           clasp pull
-          echo "== Arquivos no Apps Script:"; ls -la /tmp/remoto
-          echo "== Diferenças (repo x Apps Script):"
-          diff -rq src /tmp/remoto && echo "IDENTICO" || true
-          echo "== Script ID (prefixo): ${SCRIPT_ID:0:12}"
+          echo "::notice title=Arquivos no Apps Script::$(cd /tmp/remoto && ls | tr '\n' ' ')"
+          echo "::notice title=Diferencas::$(diff -rq src /tmp/remoto | tr '\n' ' ' || true) FIM"
+          echo "::notice title=Script ID::${SCRIPT_ID:0:10}... tamanho ${#SCRIPT_ID}"
+          echo "::notice title=Menu publicado::$(grep -o "addItem('[^']*'" /tmp/remoto/*.js | tr '\n' ' ')"
         env:
           SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
