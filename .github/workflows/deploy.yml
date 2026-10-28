@@ -1,0 +1,59 @@
+name: Deploy Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - ".github/workflows/deploy.yml"
+      - "scripts/**"
+  workflow_dispatch:
+    inputs:
+      descricao:
+        description: "Descrição da versão (opcional)"
+        required: false
+
+concurrency:
+  group: deploy-apps-script
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configurar clasp
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+        run: ./scripts/setup-clasp.sh
+
+      - name: Validar código
+        run: |
+          test -f src/appsscript.json || { echo "::error::src/appsscript.json não encontrado. Rode o workflow 'Importar do Apps Script' primeiro."; exit 1; }
+
+      - name: Enviar código (clasp push)
+        run: clasp push --force
+
+      - name: Atualizar implantação (Web App)
+        env:
+          DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+          DESC: ${{ github.event.inputs.descricao }}
+        run: |
+          MSG="${DESC:-$(git log -1 --pretty=%s | cut -c1-90)} (${GITHUB_SHA::7})"
+          if [ "$CLASP_MAJOR" = "3" ]; then
+            clasp create-deployment --deploymentId "$DEPLOYMENT_ID" --description "$MSG" \
+              || clasp deploy --deploymentId "$DEPLOYMENT_ID" --description "$MSG"
+          else
+            clasp deploy --deploymentId "$DEPLOYMENT_ID" --description "$MSG"
+          fi
+
+      - name: Resumo
+        run: |
+          echo "### ✅ Deploy concluído" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`${GITHUB_SHA::7}\` — $(git log -1 --pretty=%s)" >> "$GITHUB_STEP_SUMMARY"
