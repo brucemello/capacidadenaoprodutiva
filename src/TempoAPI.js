@@ -14,7 +14,7 @@ const CHAVES_TEMPO = {
 };
 
 const TEMPO = {
-  URL_PADRAO: 'https://jira.totvs.com.br',
+  URL_PADRAO: 'https://jiraproducao.totvs.com.br',
   SHEET_TIMES: 'TIME',
   HEADER_TEAM_ID: 'Team ID (Tempo)',
   DIA_ROTINA_MENSAL: 3,   // roda no dia 3 de cada mês (dá tempo de apontamentos atrasados)
@@ -253,7 +253,7 @@ function buscarWorklogsTempo_(cfg, teamId, deIso, ateIso) {
   const headers = { Authorization: `Bearer ${cfg.jiraToken}` };
 
   // Tempo Timesheets (Jira Server/Data Center)
-  let resp = UrlFetchApp.fetch(`${cfg.jiraBaseUrl}/rest/tempo-timesheets/4/worklogs/search`, {
+  let resp = fetchComDiagnostico_(cfg, `${cfg.jiraBaseUrl}/rest/tempo-timesheets/4/worklogs/search`, {
     method: 'post',
     contentType: 'application/json',
     headers: headers,
@@ -275,6 +275,19 @@ function buscarWorklogsTempo_(cfg, teamId, deIso, ateIso) {
   }
   const json = JSON.parse(resp.getContentText());
   return Array.isArray(json) ? json : (json.results || []);
+}
+
+/** Envolve o fetch traduzindo o erro de host inacessível pelos servidores do Google. */
+function fetchComDiagnostico_(cfg, url, opcoes) {
+  try {
+    return UrlFetchApp.fetch(url, opcoes);
+  } catch (e) {
+    if (/endere[cç]o n[aã]o dispon[ií]vel|address unavailable|dns/i.test(String(e))) {
+      throw new Error(`Os servidores do Google não conseguem acessar ${cfg.jiraBaseUrl} (endereço interno/VPN). ` +
+        `Em ⚙️ Configurações da API use a URL pública do Jira — ex.: https://jiraproducao.totvs.com.br`);
+    }
+    throw e;
+  }
 }
 
 /** Membros ativos do time no período (Tempo Teams). Falha silenciosa: é só complemento. */
