@@ -38,7 +38,11 @@ jobs:
           test -f src/appsscript.json || { echo "::error::src/appsscript.json não encontrado. Rode o workflow 'Importar do Apps Script' primeiro."; exit 1; }
 
       - name: Enviar código (clasp push)
-        run: clasp push --force
+        run: |
+          set -o pipefail
+          clasp push --force 2>&1 | tee /tmp/push.log
+          echo "::notice title=Saida do clasp push::$(tr '\n' ' ' < /tmp/push.log | cut -c1-900)"
+          if grep -qiE "error|erro|failed|syntax" /tmp/push.log; then exit 1; fi
 
       - name: Conferir código publicado
         run: |
