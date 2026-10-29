@@ -871,13 +871,16 @@
         titulo: 'Colaboradores', sub: 'Quem entra na capacidade de cada time (CONFIG_TIME)',
         filtroTime: 'time',
         cols: [
-          { key: 'nome', titulo: 'Nome completo', tipo: 'text', w: '24%' },
-          { key: 'usuario', titulo: 'Usuário Jira', tipo: 'text', w: '15%' },
-          { key: 'considerar', titulo: 'Capacidade', tipo: 'simnao', w: '10%' },
-          { key: 'time', titulo: 'Time', tipo: 'time', w: '18%' },
+          { key: 'nome', titulo: 'Nome completo', tipo: 'text', w: '20%' },
+          { key: 'usuario', titulo: 'Usuário Jira', tipo: 'text', w: '12%' },
+          { key: 'considerar', titulo: 'Capacidade', tipo: 'simnao', w: '90px' },
+          { key: 'time', titulo: 'Time', tipo: 'time', w: '15%' },
+          { key: 'inicio', titulo: 'Início vigência', tipo: 'date', w: '140px' },
+          { key: 'fim', titulo: 'Fim vigência', tipo: 'date', w: '140px' },
           { key: 'obs', titulo: 'Observação', tipo: 'text' }
         ],
-        novo: () => ({ nome: '', usuario: '', considerar: 'SIM', time: $('ctlFiltroTime').value || '', obs: '' })
+        banner: '📆 <div><b>Vigência na capacidade:</b> use <i>Início</i> para quem só conta a partir de uma data (conta nova, entrada no time) e <i>Fim</i> para quem deixa de contar (conta revogada, saída do time). Vazio = sem limite. Fora da vigência a pessoa não gera horas esperadas, e as ausências da agenda vão para a conta vigente na data.</div>',
+        novo: () => ({ nome: '', usuario: '', considerar: 'SIM', time: $('ctlFiltroTime').value || '', obs: '', inicio: '', fim: '' })
       },
       feriados: {
         titulo: 'Feriados', sub: 'Dias sem horas esperadas para todos os times',

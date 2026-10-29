@@ -181,7 +181,7 @@ function lerAgendaAusencias_(time, idAgenda, ini, fim, matcher, preservar) {
 
     const chave = ev.getId() + '|' + isoData_(inicio);
     const anterior = preservar[chave];
-    let colab = matcher(titulo, criador);
+    let colab = matcher(titulo, criador, isoData_(inicio));
     if (!colab && anterior && anterior.usuario) colab = { usuario: anterior.usuario, nome: anterior.nome };
     if (!colab) { naoVinculados.push(titulo || criador); return; }
 
@@ -243,7 +243,7 @@ function lerPlanilhaAgendamento_(time, ref, ini, fim, matcher, preservar) {
     vistos[chave] = true;
 
     const anterior = preservar[(id || titulo) + '|' + inicioIso];
-    let colab = matcher(titulo, '') || matcher(autor, '');
+    let colab = matcher(titulo, '', inicioIso) || matcher(autor, '', inicioIso);
     if (!colab && anterior && anterior.usuario) colab = { usuario: anterior.usuario, nome: anterior.nome };
     if (!colab) { naoVinculados.push(titulo || autor); return; }
 
@@ -291,7 +291,7 @@ function lerPlanilhaFerias_(time, url, matcher) {
       if (!nome || !ini || !fim || fim < ini) continue;
       const confirmada = /marcad|em gozo|finalizad/.test(sit) || ag === 'agendados' || ag === 'agendado';
       if (!confirmada) continue;
-      const colab = matcher(nome, '');
+      const colab = matcher(nome, '', isoData_(ini));
       if (!colab) { naoVinculados.push(nome); continue; }
       linhas.push({
         time: time, usuario: colab.usuario, nome: colab.nome,
@@ -315,7 +315,7 @@ function lerPlanilhaFerias_(time, url, matcher) {
       if (!nome || !ini) continue;
       const qtd = Math.max(1, converterNumero_(iQtd >= 0 ? dados[r][iQtd] : 1));
       const fim = ultimoDiaUtilApos_(ini, qtd);
-      const colab = matcher(nome, '');
+      const colab = matcher(nome, '', isoData_(ini));
       if (!colab) { naoVinculados.push(nome); continue; }
       linhas.push({
         time: time, usuario: colab.usuario, nome: colab.nome,
@@ -351,8 +351,12 @@ function criarMatcherColaborador_(colabs, contatos) {
   const lista = colabs.map(c => ({
     usuario: c.usuario, nome: c.nome,
     sim: String(c.considerar).toUpperCase() !== 'NÃO',
+    ini: c.inicio || '', fim: c.fim || '',
     tokens: normalizarTexto_(c.nome).split(/[^a-z]+/).filter(t => t.length > 2 && ['dos', 'das', 'de', 'da', 'do'].indexOf(t) < 0)
   }));
+
+  let dataRef = '';
+  const vigente = c => !dataRef || ((!c.ini || dataRef >= c.ini) && (!c.fim || dataRef <= c.fim));
 
   function porTexto(texto) {
     const tk = normalizarTexto_(String(texto).replace(/\[.*?\]/g, ' ')).split(/[^a-z]+/).filter(t => t.length >= 3);
@@ -369,6 +373,8 @@ function criarMatcherColaborador_(colabs, contatos) {
       else if (score === melhorScore && score > 0) melhor.push(c);
     });
     if (!melhorScore) return null;
+    const vig = melhor.filter(vigente);
+    if (vig.length) melhor = vig;
     const preferidos = melhor.filter(c => c.sim);
     const escolhidos = preferidos.length ? preferidos : melhor;
     return escolhidos.length === 1 ? escolhidos[0] : null; // ambíguo -> tenta o criador
@@ -379,12 +385,15 @@ function criarMatcherColaborador_(colabs, contatos) {
     if (!email) return null;
     const prefixo = email.split('@')[0];
     const direto = lista.filter(c => c.usuario === prefixo);
+    const vigentes = lista.filter(c => c.sim && vigente(c) && c.nome && direto[0] && normalizarTexto_(c.nome) === normalizarTexto_(direto[0].nome));
+    if (direto.length === 1 && !vigente(direto[0]) && vigentes.length === 1) return vigentes[0]; // conta trocada: usa a vigente
     if (direto.length === 1 && direto[0].sim) return direto[0];
     if (contatos[email]) { const c = porTexto(contatos[email]); if (c) return c; }
     return direto[0] || null;
   }
 
-  return function (titulo, criador) {
+  return function (titulo, criador, dataIso) {
+    dataRef = dataIso || '';
     const c = porTexto(titulo) || porEmail(criador);
     return c ? { usuario: c.usuario, nome: c.nome } : null;
   };

@@ -242,6 +242,7 @@ function processarTimesheetMensal(timeSelecionado, opcoes) {
 
     listaTodasDatas.forEach(diaObj => {
       const dataChave = Utilities.formatDate(diaObj, CONFIG.TIMEZONE, 'yyyy-MM-dd');
+      if (!dentroDaVigencia_(configTime[userChave], dataChave)) return; // fora da vigência: não entra
       const chaveLookup = userChave + '|' + dataChave;
       const horasApontadas = apontamentosJira[chaveLookup] || 0;
       
@@ -327,6 +328,12 @@ function recalcularLinhasTimesheet_(timeSelecionado) {
       continue;
     }
 
+    const dIsoVig = normalizarData_(dados[i][4]);
+    if (dIsoVig && !dentroDaVigencia_(conf, Utilities.formatDate(dIsoVig, CONFIG.TIMEZONE, 'yyyy-MM-dd'))) {
+      dados[i] = null; // fora da vigência: sai da TIMESHEET
+      continue;
+    }
+
     const horasImportadas = converterNumero_(dados[i][5]);
     const ajusteManual = dados[i][6] !== '' ? converterNumero_(dados[i][6]) : '';
     const horasFinais = ajusteManual !== '' ? ajusteManual : horasImportadas;
@@ -350,7 +357,11 @@ function recalcularLinhasTimesheet_(timeSelecionado) {
     dados[i][11] = horasNaoProdutivas;
     dados[i][12] = percNaoProdutivo;
   }
-  sh.getRange(1, 1, dados.length, dados[0].length).setValues(dados);
+  const mantidos = dados.filter(l => l !== null);
+  if (mantidos.length < dados.length) {
+    sh.getRange(1, 1, sh.getMaxRows(), sh.getLastColumn()).clearContent();
+  }
+  sh.getRange(1, 1, mantidos.length, mantidos[0].length).setValues(mantidos);
   
   registrarLog_('Recálculo de Ajustes', 'SUCESSO', 'Ajustes manuais e ausências integrados à base analítica' + (timeSelecionado ? ` para o time ${timeSelecionado}.` : '.'));
   atualizarBaseColaborador_();
@@ -564,6 +575,14 @@ function extrairAnoMesSemTimezone_(valor) {
   return texto.substring(0, 7);
 }
 
+/** Colaborador dentro da vigência na capacidade (colunas F e G da CONFIG_TIME, opcionais). */
+function dentroDaVigencia_(conf, dataIso) {
+  if (!conf || !dataIso) return true;
+  if (conf.vigenciaInicio && dataIso < conf.vigenciaInicio) return false;
+  if (conf.vigenciaFim && dataIso > conf.vigenciaFim) return false;
+  return true;
+}
+
 function carregarConfigTime_() {
   const ss = obterPlanilha_();
   const sh = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
@@ -574,8 +593,14 @@ function carregarConfigTime_() {
     const usuario = String(dados[i][1]).trim().toLowerCase();
     const considerar = dados[i][2] || 'SIM';
     const time = dados[i][3] || 'Sem Time Mapeado';
+    const ini = normalizarData_(dados[i][5]);
+    const fim = normalizarData_(dados[i][6]);
     if (dados[i][1]) {
-      config[usuario] = { considerar, time, nomeOriginal };
+      config[usuario] = {
+        considerar, time, nomeOriginal,
+        vigenciaInicio: ini ? Utilities.formatDate(ini, CONFIG.TIMEZONE, 'yyyy-MM-dd') : '',
+        vigenciaFim: fim ? Utilities.formatDate(fim, CONFIG.TIMEZONE, 'yyyy-MM-dd') : ''
+      };
     }
   }
   return config;

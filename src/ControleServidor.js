@@ -25,7 +25,9 @@ const CADASTROS = {
       { key: 'usuario', titulo: 'Nome de Usuário' },
       { key: 'considerar', titulo: 'Considerar capacidade?' },
       { key: 'time', titulo: 'Time' },
-      { key: 'obs', titulo: 'Observação' }
+      { key: 'obs', titulo: 'Observação' },
+      { key: 'inicio', titulo: 'Início na capacidade', data: true },
+      { key: 'fim', titulo: 'Fim na capacidade', data: true }
     ]
   },
   feriados: {
@@ -173,6 +175,7 @@ function validarCadastro_(tipo, linhas) {
       if (!l.usuario) erros.push(`Linha ${n}: informe o nome de usuário.`);
       l.considerar = (l.considerar || 'SIM').toUpperCase() === 'NÃO' || l.considerar.toUpperCase() === 'NAO' ? 'NÃO' : 'SIM';
       if (vistos[l.usuario]) erros.push(`Linha ${n}: usuário "${l.usuario}" repetido.`);
+      if (l.inicio && l.fim && l.fim < l.inicio) erros.push(`Linha ${n}: fim da capacidade antes do início.`);
       vistos[l.usuario] = true;
     }
     if (tipo === 'feriados') {
