@@ -307,9 +307,10 @@
           <div class="card-head"><div><h2>Gerar apuração do mês</h2><div class="card-sub">Busca os apontamentos no Tempo e recalcula TIMESHEET, base, histórico e resumo</div></div></div>
           <div class="form-row">
             <div class="fld"><label for="gTime">Time</label><select class="inp" id="gTime"></select></div>
-            <div class="fld"><label for="gMes">Mês de referência</label><input class="inp" type="month" id="gMes"></div>
+            <div class="fld"><label for="gMes">Mês de referência</label>
+              <div style="display:flex;gap:8px;align-items:center"><input class="inp" type="month" id="gMes"><span style="color:var(--ink-3);font-size:12px">até</span><input class="inp" type="month" id="gMesAte" title="Opcional: processa vários meses em sequência"></div></div>
           </div>
-          <p class="hint">O padrão é o último mês fechado. Gerar de novo um mês substitui só aquele mês e time no histórico; ajustes manuais da TIMESHEET são descartados.</p>
+          <p class="hint">O padrão é o último mês fechado. Para gravar vários meses fechados de uma vez, preencha também o "até". Gerar de novo um mês substitui só aquele mês e time no histórico; ajustes manuais da TIMESHEET são descartados.</p>
           <div class="btn-row">
             <button class="btn btn-primary" id="btnGerar">🚀 Buscar no Tempo e processar</button>
             <button class="btn btn-line" id="btnRecalc">🔄 Recalcular ajustes manuais</button>
@@ -447,7 +448,7 @@
     function carregar() {
       loading(true, 'Carregando indicadores…');
       google.script.run
-        .withSuccessHandler(d => { DADOS = d; montarFiltros(); render(); loading(false); })
+        .withSuccessHandler(d => { DADOS = d; Object.keys(DIARIO_CACHE).forEach(k => delete DIARIO_CACHE[k]); montarFiltros(); render(); loading(false); })
         .withFailureHandler(e => { loading(false); toast('Erro ao carregar: ' + (e.message || e), true); })
         .obterDadosDashboard();
     }
@@ -692,12 +693,30 @@
         </div>`).join('') : '<div class="empty">Sem colaboradores no filtro.</div>';
     }
 
+    const DIARIO_CACHE = {};
+    function diarioDoMes(mes) {
+      if (DIARIO_CACHE[mes]) return DIARIO_CACHE[mes];
+      const daTimesheet = (DADOS.diario || []).filter(d => d.data.slice(0, 7) === mes);
+      if (daTimesheet.length) DIARIO_CACHE[mes] = daTimesheet;
+      return DIARIO_CACHE[mes] || null;
+    }
+
     function renderHeatmap(mes) {
       const t = $('fTime').value;
-      const dias = DADOS.diario.filter(d => d.data.slice(0, 7) === mes && (t === TODOS || d.time === t));
+      let base = diarioDoMes(mes);
+      if (!base) {
+        $('heatSub').textContent = `Carregando ${nomeMesLongo(mes)}…`;
+        $('heatmap').innerHTML = '<div class="empty" style="padding:30px"><div class="spinner" style="width:28px;height:28px;border-width:3px"></div>Carregando o detalhe diário…</div>';
+        google.script.run
+          .withSuccessHandler(lista => { DIARIO_CACHE[mes] = lista || []; if ($('fMes').value === mes) renderHeatmap(mes); })
+          .withFailureHandler(e => { $('heatmap').innerHTML = `<div class="empty" style="padding:30px">Erro ao carregar: ${esc(e.message || e)}</div>`; })
+          .obterDiarioMes(mes);
+        return;
+      }
+      const dias = base.filter(d => t === TODOS || d.time === t);
       if (!dias.length) {
-        $('heatSub').textContent = 'Disponível para a última apuração processada';
-        $('heatmap').innerHTML = `<div class="empty" style="padding:30px">O detalhe diário existe apenas para o último mês processado. Reprocesse ${nomeMesLongo(mes)} para vê-lo.</div>`;
+        $('heatSub').textContent = nomeMesLongo(mes);
+        $('heatmap').innerHTML = `<div class="empty" style="padding:30px">O detalhe diário de ${nomeMesLongo(mes)} ainda não foi gravado no histórico. Processe o mês uma vez na aba Geração e ele fica salvo.</div>`;
         return;
       }
       $('heatSub').textContent = `Horas apontadas por dia · ${nomeMesLongo(mes)}`;
@@ -875,8 +894,27 @@
     function gerarMes() {
       const mes = $('gMes').value;
       if (!mes) { toast('Escolha o mês de referência.', true); return; }
-      executarServidor('buscarTimesheetTempoPeloPainel', [$('gTime').value, mes], `Buscando ${nomeMesLongo(mes)} no Tempo e processando…`,
-        () => { dashDesatualizado = true; carregarControle(); });
+      const ate = $('gMesAte').value;
+      const meses = [mes];
+      if (ate && ate > mes) { let m = mes; while (m < ate) { const [a, n] = m.split('-').map(Number); const d = new Date(a, n, 1); m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; meses.push(m); } }
+      if (meses.length > 12) { toast('Escolha no máximo 12 meses por vez.', true); return; }
+      const time = $('gTime').value;
+      const erros = [];
+      const proximo = i => {
+        if (i >= meses.length) {
+          loading(false);
+          dashDesatualizado = true;
+          toast(erros.length ? `Concluído com ${erros.length} erro(s): ${erros.join(' | ')}` : `${meses.length} mês(es) processado(s) e salvos no histórico.`, erros.length > 0);
+          carregarControle();
+          return;
+        }
+        loading(true, `Processando ${nomeMesLongo(meses[i])} (${i + 1} de ${meses.length})…`);
+        google.script.run
+          .withSuccessHandler(res => { if (res && res.sucesso === false) erros.push(`${meses[i]}: ${res.mensagem}`); proximo(i + 1); })
+          .withFailureHandler(e => { erros.push(`${meses[i]}: ${e.message || e}`); proximo(i + 1); })
+          .buscarTimesheetTempoPeloPainel(time, meses[i]);
+      };
+      proximo(0);
     }
 
     /* ======================= Controle ======================= */

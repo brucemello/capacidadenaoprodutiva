@@ -14,7 +14,8 @@ const CONFIG = {
   SHEET_RESUMO_TIME: 'RESUMO_NAO_PRODUTIVO', // Nova aba dedicada
   SHEET_CONFIG: 'CONFIG_TIME',
   SHEET_FERIADOS: 'FERIADOS',
-  SHEET_LOGS: 'LOGS_PROCESSAMENTO'
+  SHEET_LOGS: 'LOGS_PROCESSAMENTO',
+  SHEET_HIST_DIARIO: 'HISTORICO_DIARIO'
 };
 
 function onOpen() {
@@ -382,6 +383,10 @@ function atualizarBaseColaborador_() {
   const dados = shTimesheet.getDataRange().getValues();
   if (dados.length < 2) return;
 
+  // Guarda o detalhe dia a dia de cada mês fechado (substitui só o mês/time processado)
+  try { atualizarHistoricoDiario_(dados); }
+  catch (e) { registrarLog_('Histórico diário', 'ERRO', e.toString()); }
+
   const resumo = {};
   for (let i = 1; i < dados.length; i++) {
     const mes = dados[i][0];
@@ -422,6 +427,72 @@ function atualizarBaseColaborador_() {
   shBase.getRange(2, 10, saida.length - 1, 1).setNumberFormat('#,##0.00');
   
   atualizarHistorico_(shHistorico, saida);
+}
+
+/**
+ * HISTORICO_DIARIO: uma linha por colaborador/dia, acumulando todos os meses.
+ * Mês e data gravados como texto (yyyy-MM / yyyy-MM-dd) para não depender de fuso.
+ */
+function atualizarHistoricoDiario_(dadosTimesheet) {
+  const sh = getOrCreateSheet_(obterPlanilha_(), CONFIG.SHEET_HIST_DIARIO);
+  const cab = ['Mês referência', 'Time', 'Nome completo', 'Nome de Usuário', 'Data', 'Horas apontadas',
+               'Dia útil?', 'Horas esperadas', 'Horas ausência (abatidas)', 'Ausência (motivo)'];
+
+  const novas = [];
+  const chaves = new Set();
+  for (let i = 1; i < dadosTimesheet.length; i++) {
+    const r = dadosTimesheet[i];
+    const d = normalizarData_(r[4]);
+    if (!d || !r[3]) continue;
+    const iso = Utilities.formatDate(d, CONFIG.TIMEZONE, 'yyyy-MM-dd');
+    const mes = iso.substring(0, 7);
+    chaves.add(mes + '|' + r[1]);
+    novas.push([mes, r[1], r[2], String(r[3]).toLowerCase(), iso, converterNumero_(r[7]),
+                String(r[8]).toUpperCase(), converterNumero_(r[10]), converterNumero_(r[14]), r[15] || '']);
+  }
+  if (!novas.length) return;
+
+  const manter = [];
+  if (sh.getLastRow() > 1) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, cab.length).getValues().forEach(r => {
+      const mes = String(r[0]).substring(0, 7);
+      if (!chaves.has(mes + '|' + r[1])) manter.push(r);
+    });
+  }
+  const todas = manter.concat(novas).sort((a, b) =>
+    String(a[0]).localeCompare(String(b[0])) || String(a[1]).localeCompare(String(b[1])) ||
+    String(a[2]).localeCompare(String(b[2])) || String(a[4]).localeCompare(String(b[4])));
+
+  sh.clearContents();
+  sh.getRange(1, 1, 1, cab.length).setValues([cab])
+    .setBackground('#0F5B78').setFontColor('#FFFFFF').setFontWeight('bold');
+  sh.getRange(2, 1, todas.length, 1).setNumberFormat('@');
+  sh.getRange(2, 5, todas.length, 1).setNumberFormat('@');
+  sh.getRange(2, 1, todas.length, cab.length).setValues(todas);
+  sh.setFrozenRows(1);
+}
+
+/** Detalhe diário de um mês (yyyy-MM) para o mapa do dashboard. */
+function obterDiarioMes(mes) {
+  const ss = obterPlanilha_();
+  const sh = ss.getSheetByName(CONFIG.SHEET_HIST_DIARIO);
+  const lista = [];
+  if (sh && sh.getLastRow() > 1) {
+    const achados = sh.getRange('A:A').createTextFinder(mes).matchEntireCell(true).findAll();
+    if (achados.length) {
+      const ini = Math.min(...achados.map(c => c.getRow()));
+      const fim = Math.max(...achados.map(c => c.getRow()));
+      sh.getRange(ini, 1, fim - ini + 1, 10).getValues().forEach(r => {
+        if (String(r[0]) !== mes) return;
+        lista.push({
+          data: String(r[4]), time: String(r[1]), nome: String(r[2] || r[3]), usuario: String(r[3]),
+          horas: converterNumero_(r[5]), diaUtil: String(r[6]) === 'SIM', esperadas: converterNumero_(r[7]),
+          ausencia: converterNumero_(r[8]), motivo: String(r[9] || '')
+        });
+      });
+    }
+  }
+  return lista;
 }
 
 function atualizarHistorico_(shHistorico, saidaBase) {
