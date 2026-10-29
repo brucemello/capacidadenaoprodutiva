@@ -197,6 +197,12 @@ function processarTimesheetMensal(timeSelecionado, opcoes) {
   const timesPermitidos = opcoes.timesProcessados ? new Set(opcoes.timesProcessados) : null;
 
   const configTime = carregarConfigTime_();
+  // Feriados automáticos dos anos do período (não altera os manuais)
+  try {
+    const anos = [];
+    for (let a = dataMinima.getFullYear(); a <= dataMaxima.getFullYear(); a++) anos.push(a);
+    garantirFeriadosAnos_(anos);
+  } catch (e) { registrarLog_('Feriados automáticos', 'ERRO', e.toString()); }
   const feriados = carregarFeriados_();
   const mapaAusencias = carregarMapaAusencias_();
 

@@ -62,6 +62,8 @@ function sincronizarAusenciasPeloPainel(timeSelecionado) {
 
 /** Gatilho diário. */
 function rotinaDiariaAusencias() {
+  try { const a = new Date().getFullYear(); garantirFeriadosAnos_([a, a + 1]); }
+  catch (e) { registrarLog_('Feriados automáticos', 'ERRO', e.toString()); }
   try { Logger.log(sincronizarAusencias_('')); }
   catch (e) { registrarLog_('Sincronização de Ausências', 'ERRO', e.toString()); throw e; }
 }

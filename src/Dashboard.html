@@ -910,9 +910,12 @@
         titulo: 'Feriados', sub: 'Dias sem horas esperadas para todos os times',
         cols: [
           { key: 'data', titulo: 'Data', tipo: 'date', w: '180px' },
-          { key: 'descricao', titulo: 'Descrição', tipo: 'text' }
+          { key: 'descricao', titulo: 'Descrição', tipo: 'text' },
+          { key: 'origem', titulo: 'Origem', tipo: 'ro', w: '110px' }
         ],
-        novo: () => ({ data: '', descricao: '' }),
+        novo: () => ({ data: '', descricao: '', origem: 'Manual' }),
+        banner: '📅 <div><b>Feriados nacionais gerados automaticamente</b> todo ano (fixos e móveis pela Páscoa: Carnaval, Sexta-feira Santa, Corpus Christi), além do 9 de julho de SP. Inclua aqui só os <i>manuais</i>: feriados municipais, emendas e pontos facultativos. Os manuais nunca são alterados pela geração automática.</div>',
+        acao: { texto: '✨ Gerar feriados do ano', run: () => gerarFeriadosAuto() },
         ordenar: (a, b) => (a.data || '9').localeCompare(b.data || '9')
       },
       ausencias: {
@@ -920,7 +923,7 @@
         filtroTime: 'time',
         filtroPeriodo: ['inicio', 'fim'],
         banner: '🔗 <div><b>Ausências sincronizadas automaticamente</b> da agenda e da planilha de férias de cada time (aba Times), além dos lançamentos manuais. Elas abatem as horas esperadas do dia: dia inteiro zera a meta, "Horas/dia" abate só aquelas horas. Tipo <i>Informativo</i> não abate. Ajustes de colaborador e tipo em linhas sincronizadas são mantidos na próxima sincronização.</div>',
-        acao: { id: 'btnSyncCtl', texto: '🔄 Sincronizar agora' },
+        acao: { texto: '🔄 Sincronizar agora', run: () => sincronizar(false) },
         cols: [
           { key: 'time', titulo: 'Time', tipo: 'time', w: '14%' },
           { key: 'usuario', titulo: 'Colaborador', tipo: 'colab', w: '20%' },
@@ -1005,7 +1008,7 @@
           case 'tipoAus': return `<select class="cell-inp" ${at}>${CTL.tiposAusencia.map(t => `<option ${t === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
           case 'date': return `<input class="cell-inp" type="date" value="${esc(v)}" ${at}>`;
           case 'number': return `<input class="cell-inp" type="number" min="0" max="24" step="0.5" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
-          case 'ro': { const cores = { 'Google Agenda': ['#e0f2fe', '#0369a1'], 'Planilha de Férias': ['#ede9fe', '#6d28d9'] }; const [bgc, fgc] = cores[v] || ['#f1f5f9', '#334155'];
+          case 'ro': { const cores = { 'Google Agenda': ['#e0f2fe', '#0369a1'], 'Planilha de Férias': ['#ede9fe', '#6d28d9'], 'Automático': ['#dcfce7', '#047857'] }; const [bgc, fgc] = cores[v] || ['#f1f5f9', '#334155'];
             return `<span class="chip" style="background:${bgc};color:${fgc};white-space:nowrap">${esc(v || 'Manual')}</span>`; }
           default: return `<input class="cell-inp" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
         }
@@ -1074,7 +1077,16 @@
     };
     $('btnSyncAus').onclick = () => sincronizar(false);
     $('btnSyncRecalc').onclick = () => sincronizar(true);
-    $('btnAcaoCad').onclick = () => sincronizar(false);
+    $('btnAcaoCad').onclick = () => CADS[cadAtual].acao && CADS[cadAtual].acao.run();
+    function gerarFeriadosAuto() {
+      if (temAlteracao('feriados')) { toast('Salve ou descarte as alterações de Feriados antes de gerar.', true); return; }
+      executarServidor('gerarFeriadosAutomaticosPeloPainel', [], 'Gerando feriados…', res => {
+        cadastroOriginal.feriados = JSON.stringify(res.linhas);
+        cadastroEdit.feriados = res.linhas.map(r => ({ ...r }));
+        CTL.feriados = res.linhas; dashDesatualizado = true;
+        renderControle();
+      });
+    }
     $('btnRecalc').onclick = () => executarServidor('executarFuncaoPeloPainel', ['recalcularBaseEHistorico', $('gTime').value || '-- Todos os Times (Geral) --'], 'Recalculando ajustes manuais…', () => { dashDesatualizado = true; carregarControle(); });
     $('btnRotina').onclick = () => executarServidor((CTL.config && CTL.config.rotinaAtiva) ? 'desativarRotinaMensal' : 'ativarRotinaMensal', [], 'Atualizando rotina…', () => carregarControle());
     $('btnSalvarApi').onclick = () => executarServidor('salvarConfiguracoesTempo', [{ jiraBaseUrl: $('gUrl').value, jiraToken: $('gToken').value }], 'Salvando conexão…', () => { $('gToken').value = ''; carregarControle(); });

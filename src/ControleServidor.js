@@ -34,7 +34,8 @@ const CADASTROS = {
     aba: 'FERIADOS',
     colunas: [
       { key: 'data', titulo: 'Data', data: true },
-      { key: 'descricao', titulo: 'Descrição' }
+      { key: 'descricao', titulo: 'Descrição' },
+      { key: 'origem', titulo: 'Origem' }
     ]
   },
   ausencias: {
@@ -180,6 +181,9 @@ function validarCadastro_(tipo, linhas) {
     }
     if (tipo === 'feriados') {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(l.data)) erros.push(`Linha ${n}: data inválida.`);
+      if (!l.origem) l.origem = 'Manual';
+      if (vistos[l.data]) erros.push(`Linha ${n}: data ${l.data.split('-').reverse().join('/')} repetida.`);
+      vistos[l.data] = true;
     }
     if (tipo === 'ausencias') {
       l.usuario = l.usuario.toLowerCase();
