@@ -375,6 +375,14 @@
         <div><h2 id="ctlTitulo">—</h2><div class="card-sub" id="ctlSub">—</div></div>
         <div class="table-tools">
           <select class="inp" id="ctlFiltroTime" style="width:auto;padding:8px 10px"></select>
+          <span id="ctlPeriodo" style="display:none;align-items:center;gap:6px">
+            <select class="inp" id="ctlPerAtalho" style="width:auto;padding:8px 10px" title="Período">
+              <option value="">Todo o período</option><option value="mes">Este mês</option><option value="ant">Mês anterior</option>
+              <option value="prox">Próximo mês</option><option value="futuro">De hoje em diante</option><option value="ano">Este ano</option><option value="custom">Escolher datas…</option>
+            </select>
+            <input class="inp" type="date" id="ctlPerDe" style="width:auto;padding:7px 8px;display:none" title="De">
+            <input class="inp" type="date" id="ctlPerAte" style="width:auto;padding:7px 8px;display:none" title="Até">
+          </span>
           <input class="search" id="ctlBusca" placeholder="Buscar…">
           <button class="btn btn-soft" id="btnAcaoCad" style="display:none"></button>
           <button class="btn btn-soft" id="btnAddLinha">＋ Nova linha</button>
@@ -894,6 +902,7 @@
       ausencias: {
         titulo: 'Ausências', sub: 'Férias, folgas e afastamentos por colaborador',
         filtroTime: 'time',
+        filtroPeriodo: ['inicio', 'fim'],
         banner: '🔗 <div><b>Ausências sincronizadas automaticamente</b> da agenda e da planilha de férias de cada time (aba Times), além dos lançamentos manuais. Elas abatem as horas esperadas do dia: dia inteiro zera a meta, "Horas/dia" abate só aquelas horas. Tipo <i>Informativo</i> não abate. Ajustes de colaborador e tipo em linhas sincronizadas são mantidos na próxima sincronização.</div>',
         acao: { id: 'btnSyncCtl', texto: '🔄 Sincronizar agora' },
         cols: [
@@ -917,6 +926,21 @@
     function nomesTimes() { return (cadastroEdit.times || CTL.times).map(t => t.time).filter(Boolean); }
     function colabsDoTime(time) { return (cadastroEdit.colaboradores || CTL.colaboradores).filter(c => !time || c.time === time); }
 
+    /** Intervalo do filtro de período ({ de, ate } em 'yyyy-MM-dd'; null = todo o período). */
+    function periodoFiltro() {
+      const a = $('ctlPerAtalho').value;
+      const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const h = new Date(), mes = (k) => ({ de: iso(new Date(h.getFullYear(), h.getMonth() + k, 1)), ate: iso(new Date(h.getFullYear(), h.getMonth() + k + 1, 0)) });
+      $('ctlPerDe').style.display = $('ctlPerAte').style.display = a === 'custom' ? '' : 'none';
+      if (a === 'mes') return mes(0);
+      if (a === 'ant') return mes(-1);
+      if (a === 'prox') return mes(1);
+      if (a === 'futuro') return { de: iso(h), ate: '' };
+      if (a === 'ano') return { de: h.getFullYear() + '-01-01', ate: h.getFullYear() + '-12-31' };
+      if (a === 'custom' && ($('ctlPerDe').value || $('ctlPerAte').value)) return { de: $('ctlPerDe').value, ate: $('ctlPerAte').value };
+      return null;
+    }
+
     function renderControle() {
       const def = CADS[cadAtual];
       document.querySelectorAll('.subtab').forEach(b => {
@@ -936,11 +960,21 @@
       fSel.innerHTML = `<option value="">Todos os times</option>` + nomesTimes().map(t => `<option>${esc(t)}</option>`).join('');
       if (nomesTimes().includes(fv)) fSel.value = fv;
 
+      // período: mostra quem tem ausência que cruza o intervalo (início ≤ até e fim ≥ de)
+      $('ctlPeriodo').style.display = def.filtroPeriodo ? 'inline-flex' : 'none';
+      const per = def.filtroPeriodo ? periodoFiltro() : null;
+      const noPeriodo = r => {
+        if (!per || r._novo) return true;
+        const ini = r[def.filtroPeriodo[0]] || '', fim = r[def.filtroPeriodo[1]] || ini;
+        if (!ini) return true;
+        return (!per.ate || ini <= per.ate) && (!per.de || fim >= per.de);
+      };
       const termo = $('ctlBusca').value.trim().toLowerCase();
       const linhas = cadastroEdit[cadAtual] || [];
       const orig = JSON.parse(cadastroOriginal[cadAtual] || '[]');
       const visiveis = linhas.map((r, i) => ({ r, i }))
         .filter(({ r }) => !def.filtroTime || !fSel.value || r[def.filtroTime] === fSel.value || r._novo)
+        .filter(({ r }) => noPeriodo(r))
         .filter(({ r }) => !termo || Object.values(r).some(v => String(v).toLowerCase().includes(termo)));
       if (def.ordenar) visiveis.sort((a, b) => (b.r._novo ? 1 : 0) - (a.r._novo ? 1 : 0) || def.ordenar(a.r, b.r));
 
@@ -967,10 +1001,10 @@
         <tbody>${visiveis.map(({ r, i }) => `<tr class="${r._novo ? 'novo' : (origPorChave[JSON.stringify(limparLinha(r))] ? '' : 'changed')}">
           ${def.cols.map(c => `<td>${cell(c, r, i)}</td>`).join('')}
           <td><button class="icon-btn" title="Excluir linha" data-del="${i}">🗑</button></td></tr>`).join('')
-          || `<tr><td colspan="${def.cols.length + 1}"><div class="empty" style="padding:28px">Nenhum registro${termo || fSel.value ? ' para o filtro' : ''}.</div></td></tr>`}</tbody>`;
+          || `<tr><td colspan="${def.cols.length + 1}"><div class="empty" style="padding:28px">Nenhum registro${termo || fSel.value || per ? ' para o filtro' : ''}.</div></td></tr>`}</tbody>`;
 
       const sujo = temAlteracao(cadAtual);
-      $('ctlStatus').textContent = sujo ? '● Alterações não salvas' : `Sem alterações · ${linhas.length} registro(s)`;
+      $('ctlStatus').textContent = sujo ? '● Alterações não salvas' : `Sem alterações · ${visiveis.length === linhas.length ? linhas.length + ' registro(s)' : visiveis.length + ' de ' + linhas.length + ' registro(s)'}`;
       $('ctlStatus').className = 'ctl-status' + (sujo ? ' dirty' : '');
       $('btnSalvarCad').disabled = !sujo; $('btnDescartar').disabled = !sujo;
     }
@@ -1040,6 +1074,9 @@
     $('btnSalvarCad').onclick = salvarCadastroAtual;
     $('ctlBusca').oninput = renderControle;
     $('ctlFiltroTime').onchange = renderControle;
+    $('ctlPerAtalho').onchange = renderControle;
+    $('ctlPerDe').onchange = renderControle;
+    $('ctlPerAte').onchange = renderControle;
     window.addEventListener('beforeunload', e => { if (Object.keys(cadastroEdit).some(temAlteracao)) { e.preventDefault(); e.returnValue = ''; } });
 
     $('fTime').onchange = render;
