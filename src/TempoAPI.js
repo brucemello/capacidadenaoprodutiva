@@ -102,7 +102,7 @@ function obterTimesComTeamId_() {
   const lista = [];
   for (let i = 0; i < n; i++) {
     const nome = String(nomes[i][0] || '').trim();
-    const teamId = String(ids[i][0] || '').trim().replace(/\.0+$/, '');
+    const teamId = idsDoTime_(ids[i][0]).join(', ');
     if (!nome || vistos[nome]) continue;
     vistos[nome] = true;
     lista.push({ nome: nome, teamId: teamId });
@@ -197,8 +197,16 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   const resumoTimes = [];
 
   times.forEach(time => {
-    const worklogs = buscarWorklogsTempo_(cfg, time.teamId, periodo.deIso, periodo.ateIso);
-    const membros = buscarMembrosTime_(cfg, time.teamId, periodo);
+    // Um time pode ter vários Team IDs no Tempo (ex.: TSS = 1294, 895)
+    const idsTime = idsDoTime_(time.teamId);
+    const worklogs = deduplicarWorklogs_([].concat.apply([], idsTime.map(id => buscarWorklogsTempo_(cfg, id, periodo.deIso, periodo.ateIso))));
+    const membros = [];
+    const vistosMembros = {};
+    idsTime.forEach(id => buscarMembrosTime_(cfg, id, periodo).forEach(m => {
+      if (vistosMembros[m.name]) return;
+      vistosMembros[m.name] = true;
+      membros.push(m);
+    }));
 
     membros.forEach(m => { if (m.key) cacheUsuarios[m.key.toLowerCase()] = m; });
 
@@ -270,6 +278,25 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   msg += msgAus;
   registrarLog_('Busca API Tempo', 'SUCESSO', msg);
   return msg;
+}
+
+/** "1294, 895" / "1294;895" / 1294 → ['1294', '895'] */
+function idsDoTime_(valor) {
+  return String(valor == null ? '' : valor).replace(/\.0+(?=\D|$)/g, '').split(/[^\d]+/).filter(Boolean)
+    .filter((v, i, a) => a.indexOf(v) === i);
+}
+
+/** Remove apontamentos repetidos (pessoa em mais de um Team ID do mesmo time). */
+function deduplicarWorklogs_(lista) {
+  const vistos = {};
+  return lista.filter(wl => {
+    const id = wl.tempoWorklogId || wl.id || wl.originId || wl.worklogId;
+    const autor = (wl.worker && (wl.worker.key || wl.worker.name)) || (wl.author && (wl.author.key || wl.author.name || wl.author.accountId)) || wl.worker || '';
+    const k = id ? 'id:' + id : ['x', autor, wl.started || wl.startDate, wl.timeSpentSeconds, (wl.issue && (wl.issue.key || wl.issue.id)) || ''].join('|');
+    if (vistos[k]) return false;
+    vistos[k] = true;
+    return true;
+  });
 }
 
 /* =============================================================================

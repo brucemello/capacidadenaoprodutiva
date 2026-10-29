@@ -526,7 +526,7 @@
         ? 'O time não tem <strong>Team ID</strong> na aba TIME, então não é buscado no Tempo. Preencha em Controle › Times.'
         : temHist
           ? `Não há apuração de ${esc(time)} em ${nomeMesLongo(mes)}. Gere o mês na aba Geração.`
-          : `O Tempo não retornou apontamentos para o Team ID <strong>${esc(cad.teamId)}</strong> e nenhum colaborador do time está na capacidade (SIM) neste mês. Confira se o time aponta horas no Tempo e se o Team ID está correto.`;
+          : `O Tempo não retornou apontamentos para o(s) Team ID(s) <strong>${esc(cad.teamId)}</strong> e nenhum colaborador do time está na capacidade (SIM) neste mês. Confira se o time aponta horas no Tempo e se o Team ID está correto.`;
       $('dashVazio').innerHTML = `<b>${esc(time)}: sem apuração em ${nomeMesLongo(mes)}</b><div style="max-width:620px;margin:6px auto 0;line-height:1.6">${motivo}</div>`;
       $('dashVazio').hidden = false; $('conteudo').hidden = true;
       $('subtitulo').textContent = `${time} · ${nomeMesLongo(mes)} · sem apuração`;
@@ -867,7 +867,7 @@
 
       $('gTimes').innerHTML = CTL.times.length ? CTL.times.map(t => `
         <div class="team-item"><span>${esc(t.time)}</span>
-          ${t.teamId ? `<span class="id">ID ${esc(t.teamId)}</span>` : `<span class="chip pill-warn">sem Team ID</span>`}</div>`).join('')
+          ${t.teamId ? `<span class="id">${t.teamId.indexOf(',') >= 0 ? 'IDs' : 'ID'} ${esc(t.teamId)}</span>` : `<span class="chip pill-warn">sem Team ID</span>`}</div>`).join('')
         : '<div class="empty" style="padding:20px">Nenhum time cadastrado.</div>';
 
       const cor = st => /ERRO/i.test(st) ? '#ef4444' : '#10b981';
@@ -923,7 +923,7 @@
         titulo: 'Times', sub: 'Times da capacidade e o Team ID usado na busca do Tempo',
         cols: [
           { key: 'time', titulo: 'Time', tipo: 'text', w: '30%' },
-          { key: 'teamId', titulo: 'Team ID (Tempo)', tipo: 'text', w: '15%', ph: 'ex.: 1234' },
+          { key: 'teamId', titulo: 'Team ID (Tempo)', tipo: 'text', w: '15%', ph: 'ex.: 1294, 895' },
           { key: 'agenda', titulo: 'Agenda de ausências (ID Google Agenda)', tipo: 'text', ph: 'c_...@group.calendar.google.com' },
           { key: 'planilhaFerias', titulo: 'Planilha de férias (URL)', tipo: 'text', ph: 'https://docs.google.com/spreadsheets/d/...' }
         ],

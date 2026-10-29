@@ -167,7 +167,10 @@ function validarCadastro_(tipo, linhas) {
 
     if (tipo === 'times') {
       if (!l.time) erros.push(`Linha ${n}: informe o nome do time.`);
-      if (l.teamId && !/^\d+$/.test(l.teamId)) erros.push(`Linha ${n}: Team ID deve ser numérico.`);
+      if (l.teamId) {
+        if (!/^\s*\d+(\s*[,;\s]\s*\d+)*\s*$/.test(l.teamId)) erros.push(`Linha ${n}: Team ID deve ser numérico (vários IDs separados por vírgula, ex.: 1294, 895).`);
+        else l.teamId = l.teamId.split(/[^\d]+/).filter(Boolean).join(', ');
+      }
       if (vistos[l.time]) erros.push(`Linha ${n}: time "${l.time}" repetido.`);
       vistos[l.time] = true;
     }
