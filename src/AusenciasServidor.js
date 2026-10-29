@@ -123,6 +123,10 @@ function obterFontesAusenciaPorTime_() {
 
 /* ---------------------------- Google Agenda ---------------------------- */
 function lerAgendaAusencias_(time, idAgenda, ini, fim, matcher, preservar) {
+  // Aceita o ID da agenda (c_...@group.calendar.google.com) ou a planilha
+  // "Agendamento Ausências" alimentada a partir da agenda (ID ou URL)
+  if (idAgenda.indexOf('@') < 0) return lerPlanilhaAgendamento_(time, idAgenda, ini, fim, matcher, preservar);
+
   const agenda = CalendarApp.getCalendarById(idAgenda);
   if (!agenda) throw new Error(`Agenda do time "${time}" não encontrada ou sem acesso: ${idAgenda}`);
 
@@ -167,6 +171,73 @@ function lerAgendaAusencias_(time, idAgenda, ini, fim, matcher, preservar) {
     });
   });
   return { linhas: linhas, naoVinculados: naoVinculados };
+}
+
+/* ------------------- Planilha "Agendamento Ausências" -------------------
+ * Colunas: Título | Criador/Autor | Data Início | Hora Início | Data Término |
+ *          Hora Término | ID do Evento   ("Dia Inteiro" = evento de dia inteiro,
+ *          com Data Término exclusiva, como na agenda)
+ * ------------------------------------------------------------------------ */
+function lerPlanilhaAgendamento_(time, ref, ini, fim, matcher, preservar) {
+  let ss;
+  try {
+    ss = /^https?:/i.test(ref) ? SpreadsheetApp.openByUrl(ref) : SpreadsheetApp.openById(ref);
+  } catch (e) {
+    throw new Error(`Agenda do time "${time}": não consegui abrir a planilha ${ref} (${e.message}). Informe o ID da agenda (c_...@group.calendar.google.com) ou uma planilha com acesso.`);
+  }
+  const sh = ss.getSheetByName('Página1') || ss.getSheets()[0];
+  const linhas = [];
+  const naoVinculados = [];
+  if (sh.getLastRow() < 2) return { linhas: linhas, naoVinculados: naoVinculados };
+
+  const iniIso = isoData_(ini), fimIso = isoData_(fim);
+  const vistos = {};
+  sh.getRange(2, 1, sh.getLastRow() - 1, 7).getDisplayValues().forEach(r => {
+    const titulo = String(r[0] || '').trim();
+    const autor = String(r[1] || '').trim();
+    const dIni = normalizarData_(r[2]);
+    let dFim = normalizarData_(r[4]) || dIni;
+    const hIni = String(r[3] || '').trim(), hFim = String(r[5] || '').trim();
+    const id = String(r[6] || '').replace(/@google\.com$/, '').trim();
+    if (!dIni || (!titulo && !autor)) return;
+
+    const diaInteiro = /dia inteiro/i.test(hIni) || /dia inteiro/i.test(hFim);
+    let horas = '';
+    if (diaInteiro) {
+      if (dFim > dIni) dFim = new Date(dFim.getTime() - 86400000); // término exclusivo
+    } else if (isoData_(dIni) === isoData_(dFim)) {
+      horas = Math.min(Math.round(diferencaHoras_(hIni, hFim) * 100) / 100, CONFIG.HORAS_DIA);
+      if (!(horas > 0)) return;
+    }
+
+    const inicioIso = isoData_(dIni);
+    if (inicioIso > fimIso || isoData_(dFim) < iniIso) return;
+    const chave = (id || titulo) + '|' + inicioIso + '|' + hIni;
+    if (vistos[chave]) return; // linhas repetidas na planilha
+    vistos[chave] = true;
+
+    const anterior = preservar[(id || titulo) + '|' + inicioIso];
+    let colab = matcher(titulo, '') || matcher(autor, '');
+    if (!colab && anterior && anterior.usuario) colab = { usuario: anterior.usuario, nome: anterior.nome };
+    if (!colab) { naoVinculados.push(titulo || autor); return; }
+
+    let tipo = inferirTipoAusencia_(titulo);
+    if (anterior && anterior.tipo && anterior.usuario === colab.usuario) tipo = anterior.tipo;
+
+    linhas.push({
+      time: time, usuario: colab.usuario, nome: colab.nome,
+      inicio: inicioIso, fim: isoData_(dFim), tipo: tipo,
+      horas: horas === '' ? '' : String(horas),
+      origem: ORIGEM_AGENDA, idEvento: id || '', obs: titulo
+    });
+  });
+  return { linhas: linhas, naoVinculados: naoVinculados };
+}
+
+function diferencaHoras_(hIni, hFim) {
+  const m1 = String(hIni).match(/(\d{1,2}):(\d{2})/), m2 = String(hFim).match(/(\d{1,2}):(\d{2})/);
+  if (!m1 || !m2) return 0;
+  return ((+m2[1] * 60 + +m2[2]) - (+m1[1] * 60 + +m1[2])) / 60;
 }
 
 /* ---------------------------- Planilha de Férias ---------------------------- */
