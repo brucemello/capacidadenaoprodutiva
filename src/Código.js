@@ -587,14 +587,15 @@ function carregarConfigTime_() {
   const ss = obterPlanilha_();
   const sh = getOrCreateSheet_(ss, CONFIG.SHEET_CONFIG);
   const dados = sh.getDataRange().getValues();
+  const exib = sh.getDataRange().getDisplayValues(); // datas pelo texto exibido (independe do fuso)
   const config = {};
   for (let i = 1; i < dados.length; i++) {
     const nomeOriginal = dados[i][0];
     const usuario = String(dados[i][1]).trim().toLowerCase();
     const considerar = dados[i][2] || 'SIM';
     const time = dados[i][3] || 'Sem Time Mapeado';
-    const ini = normalizarData_(dados[i][5]);
-    const fim = normalizarData_(dados[i][6]);
+    const ini = normalizarData_((exib[i] || [])[5]) || null;
+    const fim = normalizarData_((exib[i] || [])[6]) || null;
     if (dados[i][1]) {
       config[usuario] = {
         considerar, time, nomeOriginal,

@@ -73,7 +73,7 @@ function listarCadastro(tipo) {
       def.colunas.forEach((c, j) => {
         let v;
         if (c.data) {
-          const d = normalizarData_(valores[i][j] instanceof Date ? valores[i][j] : exibidos[i][j]);
+          const d = normalizarData_(exibidos[i][j]) || normalizarData_(valores[i][j]); // texto exibido: independe do fuso
           v = d ? Utilities.formatDate(d, CONFIG.TIMEZONE, 'yyyy-MM-dd') : '';
         } else if (c.num) {
           const raw = valores[i][j];

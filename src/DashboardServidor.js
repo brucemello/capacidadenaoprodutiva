@@ -33,11 +33,20 @@ function obterPlanilha_() {
   try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch (e) { ss = null; }
   if (ss) {
     if (props.getProperty(CHAVE_ID_PLANILHA) !== ss.getId()) props.setProperty(CHAVE_ID_PLANILHA, ss.getId());
-    return ss;
+    return garantirFusoPlanilha_(ss);
   }
   const id = props.getProperty(CHAVE_ID_PLANILHA);
   if (!id) throw new Error('Abra a planilha uma vez (menu Capacity > Abrir Dashboard) para vincular o Web App.');
-  return SpreadsheetApp.openById(id);
+  return garantirFusoPlanilha_(SpreadsheetApp.openById(id));
+}
+
+/** Fuso da planilha diferente do script desloca as datas em um dia: corrige uma vez por execução. */
+let fusoVerificado_ = false;
+function garantirFusoPlanilha_(ss) {
+  if (fusoVerificado_) return ss;
+  fusoVerificado_ = true;
+  try { if (ss.getSpreadsheetTimeZone() !== CONFIG.TIMEZONE) ss.setSpreadsheetTimeZone(CONFIG.TIMEZONE); } catch (e) { /* sem permissão de edição */ }
+  return ss;
 }
 
 /**
@@ -109,7 +118,11 @@ function obterDadosDashboard() {
     }
   }
 
+  let times = [];
+  try { times = listarCadastro('times').linhas.map(t => ({ time: t.time, teamId: t.teamId })); } catch (e) { times = []; }
+
   return {
+    times: times,
     historico: historico,
     foraCapacidade: foraCapacidade,
     diario: diario,

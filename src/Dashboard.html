@@ -453,7 +453,7 @@
     }
 
     function montarFiltros() {
-      const times = [...new Set(DADOS.historico.map(r => r.time))].sort();
+      const times = [...new Set(DADOS.historico.map(r => r.time).concat((DADOS.times || []).map(t => t.time)))].filter(Boolean).sort();
       const meses = [...new Set(DADOS.historico.map(r => r.mes))].sort().reverse();
       const tSel = $('fTime').value || TODOS, mSel = $('fMes').value;
       $('fTime').innerHTML = `<option value="${TODOS}">Todos os times</option>` + times.map(t => `<option>${esc(t)}</option>`).join('');
@@ -496,6 +496,9 @@
       if (!mes) { renderVazio(); return; }
       $('dashVazio').hidden = true; $('conteudo').hidden = false;
       const linhas = filtrar(mes);
+      const tSelV = $('fTime').value;
+      if (tSelV !== TODOS && !linhas.length) { renderSemDadosTime(tSelV, mes); return; }
+      $('dashVazio').innerHTML = '<b>Nenhuma apuração encontrada</b>Vá na aba Geração e busque o mês no Tempo.';
       const atual = totais(linhas);
       const anterior = totais(filtrar(mesAnterior(mes)));
       const temAnterior = anterior.esp > 0;
@@ -513,6 +516,19 @@
       renderRanking(colabs);
       renderHeatmap(mes);
       renderTabela(colabs);
+    }
+
+    function renderSemDadosTime(time, mes) {
+      const cad = (DADOS.times || []).find(t => t.time === time) || {};
+      const temHist = DADOS.historico.some(r => r.time === time);
+      const motivo = !cad.teamId
+        ? 'O time não tem <strong>Team ID</strong> na aba TIME, então não é buscado no Tempo. Preencha em Controle › Times.'
+        : temHist
+          ? `Não há apuração de ${esc(time)} em ${nomeMesLongo(mes)}. Gere o mês na aba Geração.`
+          : `O Tempo não retornou apontamentos para o Team ID <strong>${esc(cad.teamId)}</strong> e nenhum colaborador do time está na capacidade (SIM) neste mês. Confira se o time aponta horas no Tempo e se o Team ID está correto.`;
+      $('dashVazio').innerHTML = `<b>${esc(time)}: sem apuração em ${nomeMesLongo(mes)}</b><div style="max-width:620px;margin:6px auto 0;line-height:1.6">${motivo}</div>`;
+      $('dashVazio').hidden = false; $('conteudo').hidden = true;
+      $('subtitulo').textContent = `${time} · ${nomeMesLongo(mes)} · sem apuração`;
     }
 
     function renderVazio() {
