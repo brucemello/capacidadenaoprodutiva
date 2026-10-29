@@ -327,7 +327,7 @@
         </section>
 
         <section class="card">
-          <div class="card-head"><div><h2>Ausências e férias</h2><div class="card-sub">Agenda de ausências e planilha de férias de cada time</div></div>
+          <div class="card-head"><div><h2>Ausências e férias</h2><div class="card-sub">Agenda de ausências, planilha de férias e ausências manuais do Timesheet de cada time</div></div>
             <button class="btn btn-soft" data-goto="ausencias">Ver ausências</button></div>
           <div class="team-list" id="gFontes" style="margin-bottom:12px"></div>
           <p class="hint">A sincronização roda sozinha todo dia às 6h (com a rotina ativa) e antes de cada geração. Depois de sincronizar, use "Recalcular ajustes manuais" para refletir no mês já gerado.</p>
@@ -861,8 +861,9 @@
       $('gFontes').innerHTML = CTL.times.map(t => {
         const ag = t.agenda ? '<span class="chip pill-ok">📅 Agenda</span>' : '<span class="chip" style="background:#f1f5f9;color:#94a3b8">📅 sem agenda</span>';
         const pf = t.planilhaFerias ? '<span class="chip pill-ok">🏖️ Férias</span>' : '<span class="chip" style="background:#f1f5f9;color:#94a3b8">🏖️ sem planilha</span>';
+        const ts = t.timesheet ? '<span class="chip pill-ok">⏱️ Timesheet</span>' : '';
         const n = CTL.ausencias.filter(a => a.time === t.time).length;
-        return `<div class="team-item"><span>${esc(t.time)} <span class="id">· ${n} ausência(s)</span></span><span style="display:flex;gap:6px">${ag}${pf}</span></div>`;
+        return `<div class="team-item"><span>${esc(t.time)} <span class="id">· ${n} ausência(s)</span></span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${ag}${pf}${ts}</span></div>`;
       }).join('');
 
       $('gTimes').innerHTML = CTL.times.length ? CTL.times.map(t => `
@@ -925,9 +926,10 @@
           { key: 'time', titulo: 'Time', tipo: 'text', w: '30%' },
           { key: 'teamId', titulo: 'Team ID (Tempo)', tipo: 'text', w: '15%', ph: 'ex.: 1294, 895' },
           { key: 'agenda', titulo: 'Agenda de ausências (ID Google Agenda)', tipo: 'text', ph: 'c_...@group.calendar.google.com' },
-          { key: 'planilhaFerias', titulo: 'Planilha de férias (URL)', tipo: 'text', ph: 'https://docs.google.com/spreadsheets/d/...' }
+          { key: 'planilhaFerias', titulo: 'Planilha de férias (URL)', tipo: 'text', ph: 'https://docs.google.com/spreadsheets/d/...' },
+          { key: 'timesheet', titulo: 'Planilha do Timesheet (ausências manuais)', tipo: 'text', ph: 'https://docs.google.com/spreadsheets/d/...' }
         ],
-        novo: () => ({ time: '', teamId: '', agenda: '', planilhaFerias: '' })
+        novo: () => ({ time: '', teamId: '', agenda: '', planilhaFerias: '', timesheet: '' })
       },
       colaboradores: {
         titulo: 'Colaboradores', sub: 'Quem entra na capacidade de cada time (CONFIG_TIME)',
@@ -1046,7 +1048,7 @@
           case 'tipoAus': return `<select class="cell-inp" ${at}>${CTL.tiposAusencia.map(t => `<option ${t === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
           case 'date': return `<input class="cell-inp" type="date" value="${esc(v)}" ${at}>`;
           case 'number': return `<input class="cell-inp" type="number" min="0" max="24" step="0.5" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
-          case 'ro': { const cores = { 'Google Agenda': ['#e0f2fe', '#0369a1'], 'Planilha de Férias': ['#ede9fe', '#6d28d9'], 'Automático': ['#dcfce7', '#047857'] }; const [bgc, fgc] = cores[v] || ['#f1f5f9', '#334155'];
+          case 'ro': { const cores = { 'Google Agenda': ['#e0f2fe', '#0369a1'], 'Planilha de Férias': ['#ede9fe', '#6d28d9'], 'Timesheet': ['#ccfbf1', '#0f766e'], 'Automático': ['#dcfce7', '#047857'] }; const [bgc, fgc] = cores[v] || ['#f1f5f9', '#334155'];
             return `<span class="chip" style="background:${bgc};color:${fgc};white-space:nowrap">${esc(v || 'Manual')}</span>`; }
           default: return `<input class="cell-inp" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${at}>`;
         }

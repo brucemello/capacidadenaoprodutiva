@@ -7,6 +7,7 @@ on:
       - "src/**"
       - ".github/workflows/deploy.yml"
       - "scripts/**"
+      - "tests/**"
   workflow_dispatch:
     inputs:
       descricao:
@@ -36,6 +37,9 @@ jobs:
       - name: Validar código
         run: |
           test -f src/appsscript.json || { echo "::error::src/appsscript.json não encontrado. Rode o workflow 'Importar do Apps Script' primeiro."; exit 1; }
+
+      - name: Testes automatizados
+        run: for t in tests/*.test.js; do [ -f "$t" ] || continue; echo "▶ $t"; node "$t"; done
 
       - name: Enviar código (clasp push)
         run: |

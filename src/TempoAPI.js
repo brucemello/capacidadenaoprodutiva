@@ -256,7 +256,7 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   // Atualiza ausências (agenda + planilha de férias) dos times processados antes de calcular
   let msgAus = '';
   try {
-    const fontes = obterFontesAusenciaPorTime_().filter(f => (f.agenda || f.planilhaFerias) && times.some(t => t.nome === f.time));
+    const fontes = obterFontesAusenciaPorTime_().filter(f => (f.agenda || f.planilhaFerias || f.timesheet) && times.some(t => t.nome === f.time));
     if (fontes.length) {
       sincronizarAusencias_(fontes.length === 1 ? fontes[0].time : timeSelecionado);
       msgAus = ' | Ausências sincronizadas: ' + fontes.map(f => f.time).join(', ');

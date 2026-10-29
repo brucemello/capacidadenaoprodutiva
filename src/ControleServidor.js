@@ -15,7 +15,8 @@ const CADASTROS = {
       { key: 'time', titulo: 'Lista de Times' },
       { key: 'teamId', titulo: 'Team ID (Tempo)' },
       { key: 'agenda', titulo: 'Agenda de Ausências (ID Google Agenda)' },
-      { key: 'planilhaFerias', titulo: 'Planilha de Férias (URL)' }
+      { key: 'planilhaFerias', titulo: 'Planilha de Férias (URL)' },
+      { key: 'timesheet', titulo: 'Planilha do Timesheet (URL) - ausências manuais' }
     ]
   },
   colaboradores: {

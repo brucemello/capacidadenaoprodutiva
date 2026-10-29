@@ -4,6 +4,9 @@
  * Fontes, configuradas por time na aba TIME:
  *   - "Agenda de Ausências (ID Google Agenda)": eventos da agenda do time
  *   - "Planilha de Férias (URL)": abas "Controle Consolidado*" e "Folgas e Emendas*"
+ *   - "Planilha do Timesheet (URL)": aba "Ausencias" (lançamentos manuais feitos no
+ *     painel do Timesheet: licenças, atestados...). Fonte única dos lançamentos
+ *     manuais do time: lança uma vez lá e vale para os dois projetos.
  * Tudo vai para a aba AUSENCIAS (origem "Google Agenda" / "Planilha de Férias"),
  * junto com os lançamentos manuais (origem "Manual"), e é usado no cálculo:
  *   - ausência de dia inteiro  -> horas esperadas do dia = 0
@@ -14,6 +17,7 @@
 const ORIGEM_AGENDA = 'Google Agenda';
 const ORIGEM_FERIAS = 'Planilha de Férias';
 const ORIGEM_MANUAL = 'Manual';
+const ORIGEM_TIMESHEET = 'Timesheet';
 const TIPO_INFORMATIVO = 'Informativo';
 
 const AUS_JANELA_MESES_ATRAS = 4;   // agenda: sincroniza desde o 1º dia de 4 meses atrás
@@ -34,6 +38,10 @@ function autorizarAcessos() {
     if (t.planilhaFerias) {
       try { SpreadsheetApp.openByUrl(t.planilhaFerias); ok.push('Férias ' + t.time); }
       catch (e) { falhas.push(`Férias ${t.time}: ${e.message}`); }
+    }
+    if (t.timesheet) {
+      try { (/^https?:/i.test(t.timesheet) ? SpreadsheetApp.openByUrl(t.timesheet) : SpreadsheetApp.openById(t.timesheet)); ok.push('Timesheet ' + t.time); }
+      catch (e) { falhas.push(`Timesheet ${t.time}: ${e.message}`); }
     }
   });
   try { UrlFetchApp.fetch('https://www.google.com', { muteHttpExceptions: true }); ok.push('Acesso externo (Jira)'); } catch (e) { falhas.push('Acesso externo: ' + e.message); }
@@ -73,7 +81,7 @@ function sincronizarAusencias_(timeSelecionado) {
   lock.waitLock(30000);
   try {
     const times = obterFontesAusenciaPorTime_().filter(t => !timeSelecionado || t.time === timeSelecionado);
-    const comFonte = times.filter(t => t.agenda || t.planilhaFerias);
+    const comFonte = times.filter(t => t.agenda || t.planilhaFerias || t.timesheet);
     if (!comFonte.length) {
       throw new Error(timeSelecionado
         ? `O time "${timeSelecionado}" não tem agenda nem planilha de férias configurada (aba TIME).`
@@ -97,6 +105,7 @@ function sincronizarAusencias_(timeSelecionado) {
     const naoVinculados = {};
     const timesAgendaSync = new Set();
     const timesFeriasSync = new Set();
+    const timesTimesheetSync = new Set();
 
     comFonte.forEach(t => {
       const colabsTime = colaboradores.filter(c => c.time === t.time);
@@ -109,6 +118,13 @@ function sincronizarAusencias_(timeSelecionado) {
         r.naoVinculados.forEach(n => naoVinculados[n] = true);
         timesFeriasSync.add(t.time);
         resumo.push(`${t.time} · férias/folgas: ${r.linhas.length}`);
+      }
+      if (t.timesheet) {
+        const r = lerAusenciasTimesheet_(t.time, t.timesheet, matcher);
+        novas = novas.concat(r.linhas);
+        r.naoVinculados.forEach(n => naoVinculados[n] = true);
+        timesTimesheetSync.add(t.time);
+        resumo.push(`${t.time} · timesheet: ${r.linhas.length}`);
       }
       if (t.agenda) {
         const r = lerAgendaAusencias_(t.time, t.agenda, janelaIni, janelaFim, matcher, preservar);
@@ -123,6 +139,7 @@ function sincronizarAusencias_(timeSelecionado) {
     const mantidas = atuais.filter(a => {
       if (a.origem === ORIGEM_MANUAL || !a.origem) return true;
       if (a.origem === ORIGEM_FERIAS) return !timesFeriasSync.has(a.time);
+      if (a.origem === ORIGEM_TIMESHEET) return !timesTimesheetSync.has(a.time);
       if (a.origem === ORIGEM_AGENDA) return !timesAgendaSync.has(a.time) || a.inicio < janelaIniIso || a.inicio > janelaFimIso;
       return true;
     });
@@ -145,7 +162,8 @@ function obterFontesAusenciaPorTime_() {
   return listarCadastro('times').linhas.map(t => ({
     time: t.time,
     agenda: String(t.agenda || '').trim(),
-    planilhaFerias: String(t.planilhaFerias || '').trim()
+    planilhaFerias: String(t.planilhaFerias || '').trim(),
+    timesheet: (v => /docs\.google\.com\/spreadsheets|^[\w-]{25,}$/.test(v) ? v : '')(String(t.timesheet || '').trim())
   })).filter(t => t.time);
 }
 
@@ -266,6 +284,47 @@ function diferencaHoras_(hIni, hFim) {
   const m1 = String(hIni).match(/(\d{1,2}):(\d{2})/), m2 = String(hFim).match(/(\d{1,2}):(\d{2})/);
   if (!m1 || !m2) return 0;
   return ((+m2[1] * 60 + +m2[2]) - (+m1[1] * 60 + +m1[2])) / 60;
+}
+
+/* --------------------- Ausências manuais do Timesheet ---------------------
+ * Aba "Ausencias" da planilha do Timesheet:
+ *   Identificador (e-mail ou nome) | Início | Fim | Horas (vazio = dia inteiro) | Motivo
+ * ------------------------------------------------------------------------ */
+function lerAusenciasTimesheet_(time, ref, matcher) {
+  let ss;
+  try {
+    ss = /^https?:/i.test(ref) ? SpreadsheetApp.openByUrl(ref) : SpreadsheetApp.openById(ref);
+  } catch (e) {
+    throw new Error(`Timesheet do time "${time}": não consegui abrir a planilha ${ref} (${e.message}).`);
+  }
+  const linhas = [], naoVinculados = [];
+  const sh = ss.getSheetByName('Ausencias');
+  if (!sh || sh.getLastRow() < 2) return { linhas: linhas, naoVinculados: naoVinculados };
+
+  sh.getRange(2, 1, sh.getLastRow() - 1, 5).getDisplayValues().forEach(r => {
+    const ident = String(r[0] || '').trim();
+    const ini = normalizarData_(r[1]);
+    const fim = normalizarData_(r[2]) || ini;
+    if (!ident || !ini || fim < ini) return;
+    const horasNum = converterNumero_(r[3]);
+    const parcial = horasNum > 0 && horasNum < CONFIG.HORAS_DIA;
+    const motivo = String(r[4] || '').trim();
+    const inicioIso = isoData_(ini);
+
+    // e-mail: tenta pelo e-mail/contatos e depois pelo nome tirado do e-mail (carla.latorre -> carla latorre)
+    let colab;
+    if (ident.indexOf('@') >= 0) colab = matcher('', ident, inicioIso) || matcher(ident.split('@')[0].replace(/[._-]+/g, ' '), '', inicioIso);
+    else colab = matcher(ident, '', inicioIso);
+    if (!colab) { naoVinculados.push(ident); return; }
+
+    linhas.push({
+      time: time, usuario: colab.usuario, nome: colab.nome,
+      inicio: inicioIso, fim: isoData_(fim), tipo: motivo ? inferirTipoAusencia_(motivo) : 'Ausência',
+      horas: parcial ? String(horasNum) : '', origem: ORIGEM_TIMESHEET, idEvento: '',
+      obs: motivo || 'Lançamento manual no Timesheet'
+    });
+  });
+  return { linhas: linhas, naoVinculados: naoVinculados };
 }
 
 /* ---------------------------- Planilha de Férias ---------------------------- */
@@ -422,7 +481,7 @@ function inferirTipoAusencia_(titulo) {
  * ===========================================================================*/
 function deduplicarAusencias_(lista) {
   // Prioridade quando o mesmo período aparece em mais de uma fonte
-  const prio = { [ORIGEM_MANUAL]: 0, [ORIGEM_FERIAS]: 1, [ORIGEM_AGENDA]: 2 };
+  const prio = { [ORIGEM_MANUAL]: 0, [ORIGEM_TIMESHEET]: 0, [ORIGEM_FERIAS]: 1, [ORIGEM_AGENDA]: 2 };
   const ordenada = lista.slice().sort((a, b) => (prio[a.origem] || 0) - (prio[b.origem] || 0));
   const vistos = {};
   return ordenada.filter(a => {
