@@ -254,7 +254,7 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
       msgAus = ' | Ausências sincronizadas: ' + fontes.map(f => f.time).join(', ');
     }
   } catch (e) {
-    msgAus = ' | Aviso: ausências não sincronizadas (' + e.message + ')';
+    msgAus = ' | Aviso: ausências não sincronizadas (' + mensagemPermissao_(e) + ')';
     registrarLog_('Sincronização de Ausências', 'ERRO', e.toString());
   }
 
@@ -305,15 +305,20 @@ function buscarWorklogsTempo_(cfg, teamId, deIso, ateIso) {
 
 /** Envolve o fetch traduzindo o erro de host inacessível pelos servidores do Google. */
 function fetchComDiagnostico_(cfg, url, opcoes) {
-  try {
-    return UrlFetchApp.fetch(url, opcoes);
-  } catch (e) {
-    if (/endere[cç]o n[aã]o dispon[ií]vel|address unavailable|dns/i.test(String(e))) {
-      throw new Error(`Os servidores do Google não conseguem acessar ${cfg.jiraBaseUrl} (endereço interno/VPN). ` +
-        `Em ⚙️ Configurações da API use a URL pública do Jira — ex.: https://jiraproducao.totvs.com.br`);
+  // Falhas de rede intermitentes (Google -> Jira): tenta de novo antes de desistir
+  const TENTATIVAS = 4;
+  let ultimoErro;
+  for (let i = 1; i <= TENTATIVAS; i++) {
+    try {
+      return UrlFetchApp.fetch(url, opcoes);
+    } catch (e) {
+      ultimoErro = e;
+      if (!/endere[cç]o n[aã]o dispon[ií]vel|address unavailable|dns|timeout|tempo limite|unavailable/i.test(String(e))) throw e;
+      if (i < TENTATIVAS) Utilities.sleep(2000 * i);
     }
-    throw e;
   }
+  throw new Error(`Não foi possível acessar ${cfg.jiraBaseUrl} depois de ${TENTATIVAS} tentativas (${ultimoErro.message}). ` +
+    `Costuma ser instabilidade momentânea: tente de novo em alguns minutos. Se persistir, confira a URL do Jira em Configurações.`);
 }
 
 /** Membros ativos do time no período (Tempo Teams). Falha silenciosa: é só complemento. */

@@ -20,6 +20,32 @@ const AUS_JANELA_MESES_ATRAS = 4;   // agenda: sincroniza desde o 1º dia de 4 m
 const AUS_JANELA_DIAS_FRENTE = 120; // ... até 120 dias à frente
 
 /* =============================================================================
+ * AUTORIZAÇÃO: executar pelo menu da planilha para o Google pedir as permissões
+ * novas (Agenda, planilhas externas, Jira). Pelo Web App o pedido não aparece.
+ * ===========================================================================*/
+function autorizarAcessos() {
+  const ok = [], falhas = [];
+  try { CalendarApp.getDefaultCalendar(); ok.push('Google Agenda'); } catch (e) { falhas.push('Agenda: ' + e.message); }
+  obterFontesAusenciaPorTime_().forEach(t => {
+    if (t.agenda && t.agenda.indexOf('@') >= 0) {
+      try { if (!CalendarApp.getCalendarById(t.agenda)) throw new Error('sem acesso'); ok.push('Agenda ' + t.time); }
+      catch (e) { falhas.push(`Agenda ${t.time}: ${e.message}`); }
+    }
+    if (t.planilhaFerias) {
+      try { SpreadsheetApp.openByUrl(t.planilhaFerias); ok.push('Férias ' + t.time); }
+      catch (e) { falhas.push(`Férias ${t.time}: ${e.message}`); }
+    }
+  });
+  try { UrlFetchApp.fetch('https://www.google.com', { muteHttpExceptions: true }); ok.push('Acesso externo (Jira)'); } catch (e) { falhas.push('Acesso externo: ' + e.message); }
+  try { ScriptApp.getProjectTriggers(); ok.push('Gatilhos'); } catch (e) { falhas.push('Gatilhos: ' + e.message); }
+
+  const msg = `Acessos OK: ${ok.join(', ')}.` + (falhas.length ? `\n\nFalhas: ${falhas.join(' | ')}` : '');
+  registrarLog_('Autorização de acessos', falhas.length ? 'ERRO' : 'SUCESSO', msg.replace(/\n/g, ' '));
+  try { SpreadsheetApp.getUi().alert(msg); } catch (e) { /* sem UI (gatilho/Web App) */ }
+  return msg;
+}
+
+/* =============================================================================
  * SINCRONIZAÇÃO
  * ===========================================================================*/
 
@@ -30,7 +56,7 @@ function sincronizarAusenciasPeloPainel(timeSelecionado) {
     return { sucesso: true, mensagem: sincronizarAusencias_(timeSelecionado) };
   } catch (e) {
     registrarLog_('Sincronização de Ausências', 'ERRO', e.toString());
-    return { sucesso: false, mensagem: e.message || e.toString() };
+    return { sucesso: false, mensagem: mensagemPermissao_(e) };
   }
 }
 
@@ -450,6 +476,13 @@ function horasAbatidasNoDia_(mapaAus, usuario, dataIso) {
 /* =============================================================================
  * UTILITÁRIOS
  * ===========================================================================*/
+function mensagemPermissao_(e) {
+  const t = String(e && e.message || e);
+  if (/permission|permiss|authoriz|autoriza/i.test(t)) {
+    return 'Falta autorizar o acesso à Agenda/planilhas. Na planilha, vá no menu Capacity Multi-Time > Configurações > 🔐 Autorizar acessos, aceite as permissões e tente de novo.';
+  }
+  return t;
+}
 function eventoDisponivel_(ev) {
   try {
     const t = ev.getTransparency();

@@ -27,6 +27,7 @@ function onOpen() {
     .addSubMenu(SpreadsheetApp.getUi().createMenu('Configurações')
       .addItem('Instalar/Atualizar Estrutura', 'inicializarOuAtualizarEstrutura')
       .addItem('⏰ Ativar Rotina Mensal Automática', 'ativarRotinaMensalPeloMenu')
+      .addItem('🔐 Autorizar acessos (Agenda, Férias, Jira)', 'autorizarAcessos')
     )
     .addToUi();
 }
@@ -454,14 +455,14 @@ function atualizarHistorico_(shHistorico, saidaBase) {
   shHistorico.getRange(2, 9, novoHistorico.length - 1, 1).setNumberFormat('0.00%');
 
   // GERA A NOVA ABA CONSOLIDADA DE FORMA TOTALMENTE ISOLADA
-  gerarAbaResumoNaoProdutivo_();
+  gerarAbaResumoNaoProdutivo_(chavesProcessadas);
 }
 
 /**
  * NOVA FUNÇÃO ISOLADA:
  * Gera a aba RESUMO_NAO_PRODUTIVO com o % não produtivo exato do time por Mês/Time
  */
-function gerarAbaResumoNaoProdutivo_() {
+function gerarAbaResumoNaoProdutivo_(chavesProcessadas) {
   const ss = obterPlanilha_();
   const shHistorico = getOrCreateSheet_(ss, CONFIG.SHEET_HISTORICO);
   const shResumo = getOrCreateSheet_(ss, CONFIG.SHEET_RESUMO_TIME);
@@ -495,10 +496,21 @@ function gerarAbaResumoNaoProdutivo_() {
   }
 
   const saida = [[
-    'Mês referência', 'Time', 'Total Horas Esperadas', 'Total Horas Apontadas', 'Total Horas Não Produtivas', '% Não Produtivo do Time', 'Total Horas Ausência (abatidas)'
+    'Mês referência', 'Time', 'Total Horas Esperadas', 'Total Horas Apontadas', 'Total Horas Não Produtivas', '% Não Produtivo do Time', 'Total Horas Ausência (abatidas)', 'Atualizado em'
   ]];
 
+  // "Atualizado em": mantém a data dos meses/times não reprocessados agora
+  const agora = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'dd/MM/yyyy HH:mm');
+  const atualizadoAnterior = {};
+  if (shResumo.getLastRow() > 1 && shResumo.getLastColumn() >= 8) {
+    shResumo.getRange(2, 1, shResumo.getLastRow() - 1, 8).getDisplayValues().forEach(r => {
+      atualizadoAnterior[extrairAnoMesSemTimezone_(r[0]) + '|' + r[1]] = r[7];
+    });
+  }
+  const processadas = new Set(chavesProcessadas || []);
+
   Object.values(consolidado).forEach(item => {
+    const chaveRes = extrairAnoMesSemTimezone_(item.mesObj) + '|' + item.time;
     // Aplica exatamente a fórmula do Looker Studio: SUM(Horas não produtivas) / SUM(Horas esperadas)
     const percTime = item.totalExp > 0 ? item.totalNp / item.totalExp : 0;
     
@@ -509,12 +521,16 @@ function gerarAbaResumoNaoProdutivo_() {
       item.totalAp,
       item.totalNp,
       percTime,
-      Math.round(item.totalAus * 100) / 100
+      Math.round(item.totalAus * 100) / 100,
+      processadas.has(chaveRes) || !atualizadoAnterior[chaveRes] ? agora : atualizadoAnterior[chaveRes]
     ]);
   });
 
+  saida.splice(1, saida.length - 1, ...saida.slice(1).sort((a, b) =>
+    (extrairAnoMesSemTimezone_(b[0]) + a[1]).localeCompare(extrairAnoMesSemTimezone_(a[0]) + b[1])));
   shResumo.clear();
   shResumo.getRange(1, 1, saida.length, saida[0].length).setValues(saida);
+  shResumo.getRange(2, 8, Math.max(saida.length - 1, 1), 1).setNumberFormat('@');
 
   // Formatação visual da nova aba
   shResumo.setFrozenRows(1);
