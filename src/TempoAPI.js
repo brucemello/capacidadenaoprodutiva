@@ -194,6 +194,7 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   const cacheUsuarios = {};
   const linhas = [];
   const membrosPorTime = [];
+  const avisosPermissao = [];
   const resumoTimes = [];
 
   times.forEach(time => {
@@ -232,6 +233,11 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
       horasTime += horas;
     });
 
+    if (!worklogs.length && membros.length) {
+      avisosPermissao.push(time.nome);
+      registrarLog_('Busca API Tempo', 'ERRO', `${time.nome} (Team ID ${time.teamId}): o Tempo devolveu 0 apontamentos para ${membros.length} membro(s). ` +
+        'Provável falta de permissão do dono do token para ver os registros da equipe (Tempo → Equipes → Permissões) ou dos projetos do Jira.');
+    }
     membrosPorTime.push({ time: time.nome, membros: membros });
     resumoTimes.push(`${time.nome}: ${worklogs.length} apontamentos (${horasTime.toFixed(1)}h)`);
   });
@@ -276,6 +282,7 @@ function buscarEProcessarMesFechado_(timeSelecionado, mesRef) {
   let msg = `Mês ${mesTxt} processado via API Tempo. ${resumoTimes.join(' | ')}`;
   if (semId.length) msg += ` | Sem Team ID (ignorados): ${semId.join(', ')}`;
   msg += msgAus;
+  if (avisosPermissao.length) msg += ` | ⚠️ Sem apontamentos visíveis (verifique a permissão no Tempo): ${avisosPermissao.join(', ')}`;
   registrarLog_('Busca API Tempo', 'SUCESSO', msg);
   return msg;
 }
