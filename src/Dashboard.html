@@ -206,6 +206,83 @@
     @media (max-width: 1250px) { .kpis { grid-template-columns: repeat(4, 1fr); } .kpi-hero { grid-column: span 2; } }
     @media (max-width: 900px) { .row-2, .row-3, .gen-grid, .form-row { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 560px) { .hero, main { padding-left: 16px; padding-right: 16px; } .field select { min-width: 140px; } }
+      .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+    .man-hero .btn-light { color: var(--navy); }
+    /* ================= MANUAL INTERATIVO ================= */
+    .man-wrap { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
+    .man-nav { position: sticky; top: 12px; padding: 14px; }
+    .man-nav .search { width: 100%; margin-bottom: 10px; }
+    .man-nav a { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: 13px; cursor: pointer; }
+    .man-nav a:hover { background: #f1f5fb; color: var(--ink); }
+    .man-nav a.on { background: #0b1f3a; color: #fff; }
+    .man-nav a[hidden] { display: none; }
+    .man-nav .man-tourbtn { width: 100%; margin-top: 12px; }
+    .man-body { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .man-hero { background: linear-gradient(120deg, #0b1f3a, #0f5b78); color: #fff; border: 0; padding: 24px; }
+    .man-hero h2 { font-size: 20px; color: #fff; }
+    .man-hero p { margin: 8px 0 16px; opacity: .88; line-height: 1.6; font-size: 13.5px; max-width: 760px; }
+    .man-quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 16px; }
+    .man-quick button { text-align: left; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); color: #fff; border-radius: 12px; padding: 12px; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600; display: flex; gap: 10px; align-items: center; transition: background .15s; }
+    .man-quick button:hover { background: rgba(255,255,255,.2); }
+    .man-quick button span { font-size: 20px; }
+    .man-sec { scroll-margin-top: 12px; transition: box-shadow .3s; }
+    .man-sec.flash { box-shadow: 0 0 0 3px rgba(15,91,120,.35), var(--shadow); }
+    .man-sec[hidden] { display: none; }
+    .man-sec .man-res { font-size: 13px; color: var(--ink-2); margin: 4px 0 12px; line-height: 1.55; }
+    .man-txt { font-size: 13px; line-height: 1.65; color: var(--ink); }
+    .man-txt h3 { font-size: 13.5px; margin: 16px 0 6px; }
+    .man-txt p { margin: 0 0 10px; }
+    .man-txt ul, .man-txt ol { margin: 0 0 10px; padding-left: 20px; }
+    .man-txt li { margin-bottom: 4px; }
+    .man-txt code { background: #eef2f8; padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+    .man-txt table { border-collapse: collapse; width: 100%; font-size: 12.5px; margin: 6px 0 12px; }
+    .man-txt th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); padding: 8px; border-bottom: 1px solid var(--line); }
+    .man-txt td { padding: 8px; border-bottom: 1px solid #f1f4f9; vertical-align: top; }
+    .man-steps { counter-reset: p; list-style: none; padding: 0 !important; }
+    .man-steps li { counter-increment: p; position: relative; padding: 2px 0 8px 36px; }
+    .man-steps li::before { content: counter(p); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; background: #0f5b78; color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+    .man-tip { display: block; padding: 10px 12px; border-radius: 10px; background: #f0f9ff; border: 1px solid #bae6fd; color: #0c4a6e; font-size: 12.5px; margin: 8px 0 12px; line-height: 1.5; }
+    .man-tip.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+    .man-flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 14px; }
+    .man-flow span.box { padding: 8px 12px; border-radius: 10px; background: #f1f5fb; border: 1px solid var(--line); font-weight: 700; font-size: 12px; }
+    .man-flow span.seta { color: var(--ink-3); font-weight: 800; }
+    .man-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 6px 0 12px; font-size: 12px; }
+    .man-legend span { display: inline-flex; gap: 6px; align-items: center; }
+    .man-legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+    .man-ir { margin-top: 6px; }
+    .man-sim { border: 1px dashed #93c5fd; background: #f8fbff; border-radius: 14px; padding: 16px; margin: 10px 0; }
+    .man-sim .form-row { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .man-sim-out { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 6px; }
+    .man-sim-out .big { font-size: 22px; font-weight: 800; }
+    .man-sim-out .cel { width: 38px; height: 32px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+    .man-sim-exp { font-size: 12.5px; color: var(--ink-2); margin-top: 10px; line-height: 1.55; }
+    .man-faq details { border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; margin-bottom: 8px; background: #fff; }
+    .man-faq details[hidden] { display: none; }
+    .man-faq summary { cursor: pointer; padding: 12px 0; font-weight: 700; font-size: 13px; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+    .man-faq summary::after { content: '＋'; color: var(--ink-3); }
+    .man-faq details[open] summary::after { content: '－'; }
+    .man-faq details .man-txt { padding: 0 0 12px; }
+    .man-vazio { text-align: center; color: var(--ink-3); padding: 30px; font-weight: 600; }
+
+    /* tour */
+    .tour-bloq { position: fixed; inset: 0; z-index: 95; }
+    .tour-luz { position: fixed; z-index: 96; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(11,27,51,.62); pointer-events: none; transition: all .3s ease; border: 2px solid #38bdf8; }
+    .tour-luz.sem { width: 0 !important; height: 0 !important; left: 50% !important; top: 40% !important; border: 0; }
+    .tour-card { position: fixed; z-index: 97; width: min(360px, calc(100vw - 24px)); background: #fff; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.3); padding: 16px 18px; transition: top .3s, left .3s; }
+    .tour-card .t-cont { font-size: 11px; font-weight: 800; color: #0f5b78; letter-spacing: .08em; text-transform: uppercase; }
+    .tour-card h4 { margin: 4px 0 6px; font-size: 15px; }
+    .tour-card p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+    .tour-card .t-bar { height: 4px; border-radius: 4px; background: #eef2f8; margin: 12px 0; overflow: hidden; }
+    .tour-card .t-bar span { display: block; height: 100%; background: linear-gradient(90deg, #06b6d4, #0f5b78); transition: width .3s; }
+    .tour-card .t-btns { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .tour-card .t-x { position: absolute; top: 10px; right: 10px; border: 0; background: transparent; cursor: pointer; font-size: 15px; color: var(--ink-3); }
+    .man-boasvindas { position: fixed; left: 18px; bottom: 18px; z-index: 60; width: min(340px, calc(100vw - 36px)); background: #fff; border-radius: 16px; box-shadow: 0 16px 40px rgba(11,27,51,.22); border: 1px solid var(--line); padding: 16px; }
+    .man-boasvindas b { font-size: 14px; }
+    .man-boasvindas p { margin: 6px 0 12px; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+    .man-ajuda { position: fixed; right: 18px; bottom: 18px; z-index: 55; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #0b1f3a; color: #fff; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 22px rgba(11,27,51,.3); }
+    .man-ajuda:hover { background: #0f5b78; }
+    @media (max-width: 900px) { .man-wrap { grid-template-columns: 1fr; } .man-nav { position: static; } }
+    @media (max-width: 560px) { .tour-card { left: 12px !important; right: 12px; bottom: 12px; top: auto !important; width: auto; } }
   </style>
 </head>
 <body>
@@ -233,6 +310,7 @@
       <button class="tab active" data-view="dash">📈 Dashboard</button>
       <button class="tab" data-view="geracao">⚙️ Geração</button>
       <button class="tab" data-view="controle">🗂️ Controle</button>
+      <button class="tab" data-view="manual">📘 Manual</button>
     </nav>
   </header>
 
@@ -400,6 +478,8 @@
       </div>
     </section>
   </div>
+    <!-- ===================== MANUAL ===================== -->
+  <div class="view" id="viewManual" hidden><div id="manualRaiz"></div></div>
   </main>
 
   <footer id="rodape">—</footer>
@@ -810,15 +890,21 @@
 
     function irPara(view) {
       if (view === viewAtual) return;
+      const anterior = viewAtual;
       viewAtual = view;
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
       $('viewDash').hidden = view !== 'dash';
       $('viewGeracao').hidden = view !== 'geracao';
       $('viewControle').hidden = view !== 'controle';
+      $('viewManual').hidden = view !== 'manual';
       $('filtrosDash').style.visibility = view === 'dash' ? 'visible' : 'hidden';
       if (view === 'dash') { if (dashDesatualizado) { dashDesatualizado = false; carregar(); } else { $('subtitulo').dataset.v && ($('subtitulo').textContent = $('subtitulo').dataset.v); } }
+      else if (view === 'manual') {
+        if (anterior === 'dash') $('subtitulo').dataset.v = $('subtitulo').textContent;
+        $('subtitulo').textContent = 'Manual de uso, tour guiado e perguntas frequentes';
+      }
       else {
-        $('subtitulo').dataset.v = $('subtitulo').textContent;
+        if (anterior === 'dash') $('subtitulo').dataset.v = $('subtitulo').textContent;
         $('subtitulo').textContent = view === 'geracao' ? 'Geração da apuração mensal, rotina automática e conexão com o Tempo' : 'Cadastros de times, colaboradores, feriados e ausências';
         if (!CTL) carregarControle(); else (view === 'geracao' ? renderGeracao() : renderControle());
       }
@@ -1155,6 +1241,292 @@
     $('btnCsv').onclick = exportarCsv;
 
     carregar();
+  </script>
+  <script>
+    /* ================= MANUAL: conteúdo do Capacidade Não Produtiva ================= */
+    window.MANUAL = {
+      chave: 'cnp_manual_visto', viewManual: 'manual',
+      irPara: v => irPara(v),
+      titulo: 'Manual da Capacidade Não Produtiva',
+      intro: 'Este painel mede, mês a mês e por time, quanto da capacidade esperada do time não foi apontada no Jira/Tempo. As horas esperadas já descontam férias, folgas, ausências e feriados. Escolha um atalho abaixo ou faça o tour guiado.',
+      rapidos: [
+        { icone: '🧮', txt: 'Como o % não produtivo é calculado', sec: 'calculo' },
+        { icone: '🚀', txt: 'Gerar ou reprocessar um mês', sec: 'geracao' },
+        { icone: '🌴', txt: 'Lançar licença, atestado ou afastamento', sec: 'ausencias' },
+        { icone: '👥', txt: 'Incluir ou tirar alguém da capacidade', sec: 'controle' },
+        { icone: '⏰', txt: 'Ligar a rotina automática', sec: 'geracao' }
+      ],
+      secoes: [
+        { id: 'visao', icone: '🧭', titulo: 'Visão geral', tags: 'como funciona fluxo mes fechado abas',
+          resumo: 'De onde vêm os dados e como o painel está organizado.',
+          html: `<div class="man-flow"><span class="box">⏱️ Tempo (Team ID de cada time)</span><span class="seta">+</span><span class="box">🌴 Ausências e férias</span><span class="seta">+</span><span class="box">🎌 Feriados</span><span class="seta">→</span><span class="box">🧮 Apuração do mês</span><span class="seta">→</span><span class="box">📊 Histórico e dashboard</span></div>
+            <ul>
+              <li>A análise é <b>mensal</b>: cada mês gerado fica gravado no histórico e alimenta os gráficos de tendência.</li>
+              <li>O padrão é o <b>último mês fechado</b>. A rotina automática gera no dia 3 de cada mês, dando tempo para apontamentos atrasados.</li>
+              <li>O painel tem 4 abas: <b>📈 Dashboard</b> (análise), <b>⚙️ Geração</b> (buscar no Tempo, rotina, conexão), <b>🗂️ Controle</b> (cadastros) e este <b>📘 Manual</b>.</li>
+            </ul>` },
+
+        { id: 'calculo', icone: '🧮', titulo: 'Como o cálculo funciona', tags: 'esperadas nao produtivas excedentes percentual formula simulador',
+          resumo: 'Horas esperadas, não produtivas, excedentes e o percentual. Teste no simulador.',
+          html: `<table><tr><th>Medida</th><th>Como é calculada (por pessoa e por dia)</th></tr>
+            <tr><td><b>Horas esperadas</b></td><td>8h por dia útil − horas de ausência do dia. Fim de semana, feriado e quem está fora da capacidade = 0h.</td></tr>
+            <tr><td><b>Horas apontadas</b></td><td>Tudo que foi lançado no Tempo no dia.</td></tr>
+            <tr><td><b>Não produtivas</b></td><td>Esperadas − apontadas, quando faltou apontar (nunca negativo).</td></tr>
+            <tr><td><b>Excedentes</b></td><td>Apontadas acima das esperadas (não compensam outros dias).</td></tr>
+            <tr><td><b>Ausência justificada</b></td><td>Horas descontadas por férias, folgas, consultas, licenças… Não contam como não produtivas.</td></tr>
+            <tr><td><b>% Não produtivo</b></td><td>Não produtivas ÷ esperadas, somando o mês (ou o time).</td></tr></table>
+            <div class="man-tip">💡 Como o excedente de um dia não compensa a falta de outro, um mês pode ter saldo positivo e ainda assim ter horas não produtivas.</div>
+            <h3>🧪 Simulador de um dia</h3>
+            <div class="man-sim">
+              <div class="form-row">
+                <div class="fld"><label>Tipo de dia</label><select class="inp" id="simTipo"><option value="util">Dia útil</option><option value="feriado">Feriado / fim de semana</option><option value="fora">Pessoa fora da capacidade</option></select></div>
+                <div class="fld"><label>Ausência no dia</label><select class="inp" id="simAusTipo"><option value="0">Nenhuma</option><option value="p">Parcial (horas)</option><option value="8">Dia inteiro</option></select></div>
+                <div class="fld" id="simAusBox"><label>Horas de ausência</label><input class="inp" type="number" id="simAus" value="2" min="0" max="8" step="0.5"></div>
+                <div class="fld"><label>Horas apontadas</label><input class="inp" type="number" id="simAp" value="5" min="0" max="16" step="0.5"></div>
+              </div>
+              <div class="man-sim-out" id="simOut"></div><div class="man-sim-exp" id="simExp"></div>
+            </div>` },
+
+        { id: 'dashboard', icone: '📈', titulo: 'Dashboard', tags: 'filtro time mes reprocessar grafico ranking mapa tabela csv',
+          resumo: 'Filtros, indicadores, gráficos e detalhamento.',
+          html: `<ul><li><b>Time</b> e <b>Mês de referência</b> (no topo) filtram tudo. <b>⟳ Reprocessar mês</b> busca o mês de novo no Tempo e recalcula; <b>↻ Atualizar</b> só recarrega a tela.</li></ul>
+            <h3>Indicadores</h3><table>
+            <tr><td><b>% Não produtivo</b> (anel)</td><td>Resultado do mês e a variação em relação ao mês anterior.</td></tr>
+            <tr><td><b>Horas esperadas / apontadas</b></td><td>Capacidade do time e o que foi lançado.</td></tr>
+            <tr><td><b>Não produtivas</b></td><td>Horas esperadas que não foram apontadas.</td></tr>
+            <tr><td><b>Excedentes</b></td><td>Horas apontadas acima do esperado.</td></tr>
+            <tr><td><b>Ausências justificadas</b></td><td>Horas descontadas por férias, folgas e ausências.</td></tr>
+            <tr><td><b>Na capacidade</b></td><td>Quantas pessoas estão sendo consideradas.</td></tr></table>
+            <h3>Gráficos</h3><ul><li><b>% por time</b>: compara os times no mês.</li><li><b>Tendência mensal</b>: esperado × apontado e a linha do % não produtivo ao longo dos meses.</li><li><b>Capacidade por colaborador</b>: produtivas, não produtivas, excedentes e ausência de cada pessoa.</li><li><b>Ranking</b>: maiores percentuais primeiro.</li></ul>
+            <h3>Mapa diário</h3>
+            <div class="man-legend"><span><i style="background:#ef4444"></i>0h</span><span><i style="background:#fb923c"></i>menos da metade</span><span><i style="background:#fcd34d"></i>abaixo da meta</span><span><i style="background:#34d399"></i>meta</span><span><i style="background:#3b82f6"></i>acima</span><span><i style="background:#a78bfa"></i>ausência (A)</span><span><i style="background:#fcd34d;box-shadow:inset 0 -3px 0 #7c3aed"></i>ausência parcial</span><span><i style="background:#eef2f8"></i>não útil</span></div>
+            <p>A tabela de detalhamento pode ser ordenada, filtrada pela busca e exportada em <b>⬇ CSV</b>.</p>
+            <button class="btn btn-soft btn-sm man-ir" data-man-ir="dash">Abrir o Dashboard →</button>` },
+
+        { id: 'geracao', icone: '⚙️', titulo: 'Geração e rotina automática', tags: 'gerar buscar tempo processar recalcular rotina dia 3 sincronizar token team id historico',
+          resumo: 'Como gerar um mês, recalcular ajustes e deixar tudo automático.',
+          html: `<h3>🚀 Gerar a apuração de um mês</h3>
+            <ol class="man-steps"><li>Na aba <b>⚙️ Geração</b>, escolha o <b>Time</b> (ou todos) e o <b>Mês</b>. Para vários meses de uma vez, preencha também o "até".</li><li>Clique em <b>🚀 Buscar no Tempo e processar</b>. As ausências são sincronizadas antes, automaticamente.</li><li>Volte ao Dashboard para ver o resultado.</li></ol>
+            <div class="man-tip warn">⚠️ Gerar de novo um mês substitui só aquele mês e time no histórico, e descarta ajustes feitos à mão na aba TIMESHEET.</div>
+            <h3>🔄 Recalcular ajustes manuais</h3><p>Depois de mudar cadastros ou ausências de um mês já gerado, use <b>Recalcular ajustes manuais</b> (ou <b>Sincronizar e recalcular</b> no cartão de ausências). Não busca de novo no Tempo.</p>
+            <h3>⏰ Rotina automática</h3><table><tr><th>Quando</th><th>O quê</th></tr>
+            <tr><td>Todo dia, 6h</td><td>Sincroniza ausências (agenda, férias, Timesheet) e feriados.</td></tr>
+            <tr><td>Dia 3 de cada mês, 7h</td><td>Gera o mês fechado anterior de todos os times com Team ID.</td></tr></table>
+            <p>Ative ou desative no cartão <b>Rotina automática</b>.</p>
+            <h3>🔌 Conexão com o Tempo</h3><p>URL do Jira e token pessoal (PAT). Deixe o token em branco para manter o atual.</p>
+            <h3>📜 Histórico de execuções</h3><p>Mostra cada geração, sincronização e erro (aba LOGS_PROCESSAMENTO).</p>
+            <button class="btn btn-soft btn-sm man-ir" data-man-ir="geracao">Abrir Geração →</button>` },
+
+        { id: 'controle', icone: '🗂️', titulo: 'Controle (cadastros)', tags: 'times team id agenda colaboradores considerar vigencia feriados salvar',
+          resumo: 'Times, colaboradores, feriados e ausências, editados direto no painel.',
+          html: `<h3>👥 Times</h3><ul><li><b>Team ID (Tempo)</b>: um ou vários, separados por vírgula (ex.: 1294, 895). Time sem Team ID fica fora da busca.</li><li><b>Agenda de ausências</b>: ID da agenda do Google ou da planilha "Agendamento Ausências".</li><li><b>Planilha de férias</b>: URL da planilha com Controle Consolidado e Folgas e Emendas.</li><li><b>Planilha do Timesheet</b>: URL da planilha do Timesheet, para ler as ausências manuais lançadas lá.</li></ul>
+            <h3>🧑‍💻 Colaboradores</h3><ul><li><b>Capacidade SIM/NÃO</b>: NÃO tira a pessoa das contas (ex.: líder, estagiário fora do escopo).</li><li><b>Início / Fim na capacidade</b>: para quem entrou ou saiu no meio do mês; fora dessas datas os dias não contam.</li><li>Quem aponta no Tempo e ainda não está cadastrado entra sozinho na próxima geração.</li></ul>
+            <h3>📅 Feriados</h3><p>Nacionais e de SP são criados automaticamente (origem "Automático"). Cadastre à mão municipais, emendas e pontos facultativos.</p>
+            <h3>🌴 Ausências</h3><p>Lista tudo que foi sincronizado e o que foi lançado aqui. Veja a seção <a data-man-sec="ausencias" style="cursor:pointer;color:var(--teal);font-weight:700">Ausências e férias</a>.</p>
+            <p>Linhas alteradas ficam destacadas e nada é gravado até clicar em <b>💾 Salvar alterações</b>.</p>
+            <button class="btn btn-soft btn-sm man-ir" data-man-ir="controle">Abrir Controle →</button>` },
+
+        { id: 'ausencias', icone: '🌴', titulo: 'Ausências e férias', tags: 'agenda ferias folga licenca atestado timesheet manual informativo tipo origem',
+          resumo: 'As fontes de ausência, os tipos e onde lançar os casos manuais.',
+          html: `<table><tr><th>Origem</th><th>De onde vem</th></tr>
+            <tr><td><span class="chip" style="background:#ede9fe;color:#6d28d9">Planilha de Férias</span></td><td>Férias confirmadas (Controle Consolidado) e folgas GIFTCARD/RESETDAY/MVT (Folgas e Emendas).</td></tr>
+            <tr><td><span class="chip" style="background:#e0f2fe;color:#0369a1">Google Agenda</span></td><td>Eventos da agenda do time: dia inteiro ou com horário.</td></tr>
+            <tr><td><span class="chip" style="background:#ccfbf1;color:#0f766e">Timesheet</span></td><td>Ausências manuais lançadas no painel do Timesheet.</td></tr>
+            <tr><td><span class="chip" style="background:#f1f5f9;color:#334155">Manual</span></td><td>Lançadas aqui no Controle.</td></tr></table>
+            <h3>Onde lançar licença, atestado ou afastamento?</h3>
+            <div class="man-tip">🔗 Lance no painel do <b>Timesheet › Cadastros › Ausências manuais</b>. Vale para os dois painéis. Aqui ele chega na próxima sincronização (todo dia às 6h, ou clique em <b>Sincronizar e recalcular</b> na aba Geração). Para isso, o time precisa ter a <b>Planilha do Timesheet</b> preenchida em Controle › Times.</div>
+            <h3>Tipos</h3><p>Férias, Folga, Consulta/Exame, Atestado, Licença, Treinamento, Banco de horas, Ausência e <b>Informativo</b>. O tipo vem das palavras do título; dá para corrigir na lista e a correção é mantida nas próximas sincronizações. <b>Informativo</b> não desconta horas (ex.: evento marcado como "Disponível").</p>
+            <h3>Como a pessoa é identificada</h3><p>Pelo nome no título do evento ("Carla - Consulta", "Ausência: NOME [Marcadas]") e, se não der, pelo criador. Eventos não identificados aparecem no resultado da sincronização.</p>` },
+
+        { id: 'integracao', icone: '🔗', titulo: 'Integração com o Timesheet', tags: 'timesheet integracao fonte unica',
+          resumo: 'O que é compartilhado entre os dois painéis.',
+          html: `<ul><li>Os dois leem a mesma <b>planilha de férias</b> e a mesma <b>agenda de ausências</b>.</li><li>As <b>ausências manuais</b> são lançadas só no Timesheet e lidas aqui (origem "Timesheet").</li><li>Diferença: aqui "% não produtivo" mede <b>horas esperadas que não foram apontadas</b>; no Timesheet, mede <b>horas de ausência</b> sobre a capacidade.</li></ul>` }
+      ],
+      faq: [
+        { p: 'Lancei uma ausência e o mês já gerado não mudou.', r: '<p>Na aba Geração, clique em <b>Sincronizar e recalcular</b>. Isso traz as ausências novas e refaz o mês sem buscar de novo no Tempo.</p>' },
+        { p: 'Onde lanço licença por falecimento, atestado ou afastamento?', r: '<p>No painel do <b>Timesheet › Cadastros › Ausências manuais</b>. Ele vale para os dois. Confira se o time tem a Planilha do Timesheet preenchida em Controle › Times.</p>' },
+        { p: 'Alguém aparece com muita hora não produtiva, mas estava de férias.', r: '<p>As férias não estão em nenhuma fonte, ou o evento da agenda não tem o nome da pessoa. Confira a lista em Controle › Ausências; se faltar, lance no Timesheet.</p>' },
+        { p: 'Como tiro alguém das contas?', r: '<p>Em Controle › Colaboradores, <b>Capacidade = NÃO</b>. Se a pessoa entrou ou saiu no meio do mês, use as datas de início/fim.</p>' },
+        { p: 'Um time não aparece na geração.', r: '<p>Falta o Team ID em Controle › Times.</p>' },
+        { p: 'Apontamentos atrasados vão entrar?', r: '<p>A rotina gera o mês fechado no dia 3. Se alguém apontou depois disso, use <b>⟳ Reprocessar mês</b> no Dashboard.</p>' },
+        { p: 'Por que o saldo é positivo e mesmo assim há horas não produtivas?', r: '<p>Excedentes de um dia não compensam a falta de outro: cada dia é calculado separado.</p>' },
+        { p: 'Feriado municipal não está sendo considerado.', r: '<p>Cadastre em Controle › Feriados e recalcule o mês.</p>' },
+        { p: 'Apareceu erro de permissão ao sincronizar.', r: '<p>Abra a planilha e use o menu do projeto para autorizar os acessos (Agenda e planilhas externas). Pelo navegador o pedido de permissão não aparece.</p>' }
+      ],
+      tour: [
+        { view: 'dash', sel: '#tabs', titulo: 'Navegação', texto: 'Dashboard para analisar, Geração para buscar no Tempo, Controle para os cadastros e o Manual.' },
+        { view: 'dash', sel: '#filtrosDash', titulo: 'Filtros', texto: 'Escolha o time e o mês. ⟳ Reprocessar mês busca de novo no Tempo.' },
+        { view: 'dash', sel: '#kpis', titulo: 'Indicadores', texto: '% não produtivo do mês e a comparação com o anterior, horas esperadas, apontadas, não produtivas, excedentes e ausências.' },
+        { view: 'dash', sel: '#chTimes', titulo: '% por time', texto: 'Compara os times no mês escolhido. Ao lado, a tendência mês a mês.' },
+        { view: 'dash', sel: '#ranking', titulo: 'Ranking', texto: 'Quem tem o maior percentual de horas não produtivas.' },
+        { view: 'dash', sel: '#heatmap', titulo: 'Mapa diário', texto: 'Cada quadrado é um dia de uma pessoa. Roxo = ausência, vermelho = nada apontado.' },
+        { view: 'geracao', sel: '#btnGerar', titulo: 'Gerar o mês', texto: 'Busca no Tempo e recalcula tudo do mês e time escolhidos.' },
+        { view: 'geracao', sel: '#btnRotina', titulo: 'Rotina automática', texto: 'Ligada, gera o mês fechado todo dia 3 e sincroniza as ausências todo dia às 6h.' },
+        { view: 'geracao', sel: '#gFontes', titulo: 'Fontes de ausência', texto: 'Agenda, planilha de férias e Timesheet de cada time. Use Sincronizar e recalcular depois de lançar algo.' },
+        { view: 'controle', sel: '#subtabs', titulo: 'Cadastros', texto: 'Times (Team ID e fontes), colaboradores (quem entra na capacidade), feriados e ausências. Lembre de salvar.' },
+        { view: 'manual', sel: '.man-nav', titulo: 'Pronto!', texto: 'Qualquer dúvida, volte a este manual pelo botão ? no canto da tela. Dá para buscar por palavra.' }
+      ],
+      depois: () => {
+        const $s = id => document.getElementById(id);
+        const f = v => (Number(v) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+        function calc() {
+          const tipo = $s('simTipo').value, at = $s('simAusTipo').value, ap = parseFloat($s('simAp').value) || 0;
+          $s('simAusBox').style.display = at === 'p' && tipo === 'util' ? '' : 'none';
+          const aus = tipo !== 'util' ? 0 : at === '8' ? 8 : at === 'p' ? Math.min(8, parseFloat($s('simAus').value) || 0) : 0;
+          const esp = tipo === 'util' ? Math.max(8 - aus, 0) : 0;
+          const np = Math.max(esp - ap, 0), exc = Math.max(ap - esp, 0), perc = esp ? np / esp : 0;
+          const chip = (c, t) => `<span class="chip" style="background:${c}22;color:${c}">${t}</span>`;
+          $s('simOut').innerHTML = `<span class="big">${f(perc * 100)}%</span><span style="color:var(--ink-3);font-weight:600">não produtivo no dia</span>` +
+            chip('#3b82f6', `Esperadas ${f(esp)}h`) + chip('#10b981', `Produtivas ${f(Math.min(ap, esp))}h`) + chip('#ef4444', `Não produtivas ${f(np)}h`) + chip('#f97316', `Excedentes ${f(exc)}h`) + chip('#8b5cf6', `Ausência ${f(aus)}h`);
+          $s('simExp').innerHTML = tipo === 'feriado' ? 'Feriado e fim de semana não têm horas esperadas: o que for apontado vira excedente.'
+            : tipo === 'fora' ? 'Quem está com Capacidade = NÃO (ou fora das datas de início/fim) não entra nas contas.'
+            : `Esperadas = 8h − ${f(aus)}h de ausência = <b>${f(esp)}h</b>. ` + (np ? `Faltaram <b>${f(np)}h</b> apontadas: viram horas não produtivas.` : exc ? `Apontou <b>${f(exc)}h</b> a mais: viram excedentes (não compensam outros dias).` : 'Apontou exatamente o esperado.');
+        }
+        ['simTipo', 'simAusTipo', 'simAus', 'simAp'].forEach(id => $s(id).addEventListener('input', calc));
+        calc();
+      }
+    };
+    /* ================= MANUAL INTERATIVO (motor) =================
+     * Conteúdo em window.MANUAL: { chave, titulo, intro, rapidos, secoes, faq, tour, irPara, depois }
+     * ============================================================= */
+    (function () {
+      const M = window.MANUAL; if (!M) return;
+      const q = s => document.querySelector(s);
+      const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+      const txt = h => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent; };
+
+      function montar() {
+        const raiz = q('#manualRaiz'); if (!raiz) return;
+        raiz.innerHTML = `<div class="man-wrap">
+          <aside class="card man-nav">
+            <input class="search" id="manBusca" placeholder="🔍 Buscar no manual…">
+            <nav id="manNav">${M.secoes.map(s => `<a data-man-sec="${s.id}"><span>${s.icone}</span>${s.titulo}</a>`).join('')}<a data-man-sec="faq"><span>❓</span>Perguntas frequentes</a></nav>
+            <button class="btn btn-primary man-tourbtn" data-man-tour>▶ Tour guiado pela tela</button>
+          </aside>
+          <div class="man-body">
+            <section class="card man-hero">
+              <h2>📘 ${M.titulo}</h2><p>${M.intro}</p>
+              <div class="btn-row"><button class="btn btn-light" data-man-tour>▶ Fazer o tour guiado</button></div>
+              <div class="man-quick">${M.rapidos.map(r => `<button data-man-sec="${r.sec}"><span>${r.icone}</span>${r.txt}</button>`).join('')}</div>
+            </section>
+            ${M.secoes.map(s => `<section class="card man-sec" id="man-${s.id}">
+              <h2>${s.icone} ${s.titulo}</h2><div class="man-res">${s.resumo}</div><div class="man-txt">${s.html}</div></section>`).join('')}
+            <section class="card man-sec man-faq" id="man-faq"><h2>❓ Perguntas frequentes</h2><div class="man-res">Clique na pergunta para ver a resposta.</div>
+              ${M.faq.map(f => `<details><summary>${f.p}</summary><div class="man-txt">${f.r}</div></details>`).join('')}</section>
+            <div class="card man-vazio" id="manVazio" hidden>Nada encontrado. Tente outra palavra (ex.: férias, cobrança, feriado).</div>
+          </div></div>`;
+
+        raiz.addEventListener('click', e => {
+          const s = e.target.closest('[data-man-sec]'); if (s) return irSecao(s.dataset.manSec);
+        });
+        q('#manBusca').addEventListener('input', e => buscar(e.target.value));
+        if (M.depois) M.depois();
+      }
+
+      function irSecao(id) {
+        const el = q('#man-' + id); if (!el) return;
+        el.hidden = false; el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1400);
+        document.querySelectorAll('#manNav a').forEach(a => a.classList.toggle('on', a.dataset.manSec === id));
+      }
+
+      function buscar(termo) {
+        const t = norm(termo).trim();
+        let algum = false;
+        M.secoes.forEach(s => {
+          const ok = !t || norm(s.titulo + ' ' + txt(s.resumo) + ' ' + txt(s.html) + ' ' + (s.tags || '')).includes(t);
+          q('#man-' + s.id).hidden = !ok; q(`#manNav a[data-man-sec="${s.id}"]`).hidden = !ok; algum = algum || ok;
+        });
+        let faqOk = false;
+        document.querySelectorAll('#man-faq details').forEach((d, i) => {
+          const f = M.faq[i]; const ok = !t || norm(f.p + ' ' + txt(f.r)).includes(t);
+          d.hidden = !ok; if (t && ok) d.open = true; faqOk = faqOk || ok;
+        });
+        q('#man-faq').hidden = !faqOk; q('#manNav a[data-man-sec="faq"]').hidden = !faqOk;
+        q('.man-hero').hidden = !!t;
+        q('#manVazio').hidden = algum || faqOk;
+      }
+
+      /* ---------------- Tour guiado ---------------- */
+      let passo = 0, ativo = false, bloq, luz, card;
+      function tourIniciar() {
+        fecharBoasVindas(); ativo = true; passo = 0;
+        bloq = document.createElement('div'); bloq.className = 'tour-bloq';
+        luz = document.createElement('div'); luz.className = 'tour-luz sem';
+        card = document.createElement('div'); card.className = 'tour-card';
+        document.body.append(bloq, luz, card);
+        bloq.onclick = () => {};
+        mostrar();
+      }
+      function tourFim() {
+        ativo = false; [bloq, luz, card].forEach(x => x && x.remove());
+        ls.set(M.chave, '1');
+        if (M.irPara) M.irPara(M.viewManual || 'manual');
+      }
+      function mostrar() {
+        const p = M.tour[passo];
+        if (p.view && M.irPara) M.irPara(p.view);
+        card.innerHTML = `<button class="t-x" title="Sair do tour">✕</button>
+          <div class="t-cont">Passo ${passo + 1} de ${M.tour.length}</div><h4>${p.titulo}</h4><p>${p.texto}</p>
+          <div class="t-bar"><span style="width:${(passo + 1) / M.tour.length * 100}%"></span></div>
+          <div class="t-btns"><button class="btn btn-line btn-sm" data-t="ant" ${passo ? '' : 'disabled'}>← Voltar</button>
+          <button class="btn btn-primary btn-sm" data-t="prox">${passo === M.tour.length - 1 ? 'Concluir ✓' : 'Próximo →'}</button></div>`;
+        card.querySelector('.t-x').onclick = tourFim;
+        card.querySelector('[data-t=ant]').onclick = () => { if (passo) { passo--; mostrar(); } };
+        card.querySelector('[data-t=prox]').onclick = () => { if (passo < M.tour.length - 1) { passo++; mostrar(); } else tourFim(); };
+        setTimeout(() => {
+          const el = p.sel ? q(p.sel) : null;
+          const visivel = el && el.getClientRects().length && el.offsetParent !== null;
+          if (!visivel) { luz.className = 'tour-luz sem'; posCard(null); return; }
+          el.scrollIntoView({ block: 'center' });
+          setTimeout(() => {
+            const r = el.getBoundingClientRect(), m = 6;
+            const top = Math.max(4, r.top - m), alt = Math.min(r.height + m * 2, window.innerHeight - top - 4);
+            luz.className = 'tour-luz';
+            Object.assign(luz.style, { left: (r.left - m) + 'px', top: top + 'px', width: (r.width + m * 2) + 'px', height: alt + 'px' });
+            posCard({ left: r.left, top, bottom: top + alt, width: r.width });
+          }, 220);
+        }, 260);
+      }
+      function posCard(r) {
+        const w = card.offsetWidth, h = card.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+        if (!r) { card.style.left = (vw - w) / 2 + 'px'; card.style.top = Math.max(12, (vh - h) / 2) + 'px'; return; }
+        let top = r.bottom + 12;
+        if (top + h > vh - 8) top = r.top - h - 12;
+        if (top < 8) top = Math.min(vh - h - 12, r.top + 12);
+        const left = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), vw - w - 12);
+        card.style.left = left + 'px'; card.style.top = Math.max(8, top) + 'px';
+      }
+      document.addEventListener('keydown', e => {
+        if (!ativo) return;
+        if (e.key === 'Escape') tourFim();
+        if (e.key === 'ArrowRight') card.querySelector('[data-t=prox]').click();
+        if (e.key === 'ArrowLeft') card.querySelector('[data-t=ant]').click();
+      });
+      window.addEventListener('resize', () => { if (ativo) mostrar(); });
+      document.addEventListener('click', e => { if (e.target.closest('[data-man-tour]')) tourIniciar(); });
+      document.addEventListener('click', e => { const b = e.target.closest('[data-man-ir]'); if (b && M.irPara) M.irPara(b.dataset.manIr); });
+
+      /* ---------------- Boas-vindas + botão de ajuda ---------------- */
+      function fecharBoasVindas() { const b = q('#manBoasVindas'); if (b) b.remove(); ls.set(M.chave, '1'); }
+      function boasVindas() {
+        const aj = document.createElement('button'); aj.className = 'man-ajuda'; aj.title = 'Manual e tour guiado'; aj.textContent = '?';
+        aj.onclick = () => { if (M.irPara) M.irPara(M.viewManual || 'manual'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        document.body.appendChild(aj);
+        if (ls.get(M.chave)) return;
+        const b = document.createElement('div'); b.className = 'man-boasvindas'; b.id = 'manBoasVindas';
+        b.innerHTML = `<b>👋 Primeira vez por aqui?</b><p>Faça um tour rápido de 1 minuto pela tela ou abra o manual com tudo explicado.</p>
+          <div class="btn-row"><button class="btn btn-primary btn-sm" data-man-tour>▶ Fazer o tour</button>
+          <button class="btn btn-line btn-sm" id="manBvManual">📘 Abrir manual</button><button class="btn btn-line btn-sm" id="manBvX">Agora não</button></div>`;
+        document.body.appendChild(b);
+        q('#manBvManual').onclick = () => { fecharBoasVindas(); M.irPara && M.irPara(M.viewManual || 'manual'); };
+        q('#manBvX').onclick = fecharBoasVindas;
+      }
+
+      montar(); boasVindas();
+      window.manualIrSecao = irSecao;
+    })();
   </script>
 </body>
 </html>
